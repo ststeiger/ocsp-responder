@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30225.117
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OcspResponder", "OcspResponder\OcspResponder.csproj", "{91C46517-1893-4EBB-89AA-541EDB6A106D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OCSPGuardian", "OCSPGuardian\OCSPGuardian.csproj", "{E25D0F4F-2D2D-4878-8EFC-FCF2EB2F8B67}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OcspResponder.Core", "OcspResponder.Core\OcspResponder.Core.csproj", "{C3AF931E-D582-433C-B6E7-CDF70F1EFFDB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestOCSP", "TestOCSP\TestOCSP.csproj", "{F39654D2-693A-47A3-BF7E-35EBA88A547B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,12 +16,24 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{91C46517-1893-4EBB-89AA-541EDB6A106D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{91C46517-1893-4EBB-89AA-541EDB6A106D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{91C46517-1893-4EBB-89AA-541EDB6A106D}.Integration|Any CPU.ActiveCfg = Integration|Any CPU
-		{91C46517-1893-4EBB-89AA-541EDB6A106D}.Integration|Any CPU.Build.0 = Integration|Any CPU
-		{91C46517-1893-4EBB-89AA-541EDB6A106D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{91C46517-1893-4EBB-89AA-541EDB6A106D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E25D0F4F-2D2D-4878-8EFC-FCF2EB2F8B67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E25D0F4F-2D2D-4878-8EFC-FCF2EB2F8B67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E25D0F4F-2D2D-4878-8EFC-FCF2EB2F8B67}.Integration|Any CPU.ActiveCfg = Debug|Any CPU
+		{E25D0F4F-2D2D-4878-8EFC-FCF2EB2F8B67}.Integration|Any CPU.Build.0 = Debug|Any CPU
+		{E25D0F4F-2D2D-4878-8EFC-FCF2EB2F8B67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E25D0F4F-2D2D-4878-8EFC-FCF2EB2F8B67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3AF931E-D582-433C-B6E7-CDF70F1EFFDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3AF931E-D582-433C-B6E7-CDF70F1EFFDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3AF931E-D582-433C-B6E7-CDF70F1EFFDB}.Integration|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3AF931E-D582-433C-B6E7-CDF70F1EFFDB}.Integration|Any CPU.Build.0 = Debug|Any CPU
+		{C3AF931E-D582-433C-B6E7-CDF70F1EFFDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3AF931E-D582-433C-B6E7-CDF70F1EFFDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F39654D2-693A-47A3-BF7E-35EBA88A547B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F39654D2-693A-47A3-BF7E-35EBA88A547B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F39654D2-693A-47A3-BF7E-35EBA88A547B}.Integration|Any CPU.ActiveCfg = Debug|Any CPU
+		{F39654D2-693A-47A3-BF7E-35EBA88A547B}.Integration|Any CPU.Build.0 = Debug|Any CPU
+		{F39654D2-693A-47A3-BF7E-35EBA88A547B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F39654D2-693A-47A3-BF7E-35EBA88A547B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
