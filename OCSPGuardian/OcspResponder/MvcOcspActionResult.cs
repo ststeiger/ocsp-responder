@@ -6,7 +6,7 @@ namespace OcspResponder.AspNetCore
     /// <summary>
     /// An Ocsp response
     /// </summary>
-    public class OcspActionResult 
+    public class MvcOcspActionResult 
         : Microsoft.AspNetCore.Mvc.IActionResult
     {
 
@@ -21,7 +21,7 @@ namespace OcspResponder.AspNetCore
         /// Creates a <see cref="IActionResult"/> for Ocsp responses
         /// </summary>
         /// <param name="ocspHttpResponse"><see cref="OcspHttpResponse"/></param>
-        public OcspActionResult(OcspResponder.Core.OcspHttpResponse ocspHttpResponse)
+        public MvcOcspActionResult(OcspResponder.Core.OcspHttpResponse ocspHttpResponse)
         {
             OcspHttpResponse = ocspHttpResponse;
         } // End Constructor 
@@ -40,7 +40,7 @@ namespace OcspResponder.AspNetCore
         } // End Task ExecuteResultAsync 
 
 
-    } // End Class OcspActionResult 
+    } // End Class MvcOcspActionResult 
 
 
 } // End Namespace 

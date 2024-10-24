@@ -3,7 +3,7 @@ namespace OcspResponder.AspNetCore
 {
 
 
-    public class MinimalOcspActionResult
+    public class MinimalOcspResult
         : Microsoft.AspNetCore.Http.IResult
     {
 
@@ -18,7 +18,7 @@ namespace OcspResponder.AspNetCore
         /// Creates a <see cref="IActionResult"/> for Ocsp responses
         /// </summary>
         /// <param name="ocspHttpResponse"><see cref="OcspHttpResponse"/></param>
-        public MinimalOcspActionResult(OcspResponder.Core.OcspHttpResponse ocspHttpResponse)
+        public MinimalOcspResult(OcspResponder.Core.OcspHttpResponse ocspHttpResponse)
         {
             OcspHttpResponse = ocspHttpResponse;
         } // End Constructor 
@@ -29,8 +29,10 @@ namespace OcspResponder.AspNetCore
             context.Response.StatusCode = 200;
             context.Response.ContentType = OcspHttpResponse.MediaType;
             await context.Response.BodyWriter.WriteAsync(OcspHttpResponse.Content);
-        }
-    }
+        } // End Task ExecuteAsync 
 
 
-}
+    } // End Class MinimalOcspResult 
+
+
+} // End Namespace 

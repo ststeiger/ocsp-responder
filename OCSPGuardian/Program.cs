@@ -71,7 +71,7 @@ namespace OCSPGuardian
                 global::OcspResponder.Core.OcspHttpRequest ocspHttpRequest = await request.ToOcspHttpRequest();
                 global::OcspResponder.Core.OcspHttpResponse ocspHttpResponse = await ocspResponder.Respond(ocspHttpRequest);
                 // new OcspResponder.Responder.Services.RequestMetadata(request.Connection.RemoteIpAddress);
-                return new global::OcspResponder.AspNetCore.MinimalOcspActionResult(ocspHttpResponse);
+                return new global::OcspResponder.AspNetCore.MinimalOcspResult(ocspHttpResponse);
             });
 
 
@@ -81,7 +81,7 @@ namespace OCSPGuardian
                 global::OcspResponder.Core.OcspHttpRequest ocspHttpRequest = await request.ToOcspHttpRequest();
                 global::OcspResponder.Core.OcspHttpResponse ocspHttpResponse = await ocspResponder.Respond(ocspHttpRequest);
                 
-                return new global::OcspResponder.AspNetCore.MinimalOcspActionResult(ocspHttpResponse);
+                return new global::OcspResponder.AspNetCore.MinimalOcspResult(ocspHttpResponse);
             });
 
             // openssl ocsp -issuer ca_cert.pem -cert server_cert.pem -text -url http://ocsp.provider.com is the
