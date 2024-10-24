@@ -1,0 +1,12 @@
+{
+  "Kestrel": {
+    "BehindReverseProxy": true,
+
+    "EndPoints": {
+      "Https": {
+        "Url": "http://*:5667"
+      }
+    }
+  }
+
+}

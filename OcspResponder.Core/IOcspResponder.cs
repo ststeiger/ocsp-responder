@@ -1,9 +1,9 @@
-using System.Threading.Tasks;
+
 
 namespace OcspResponder.Core
 {
     public interface IOcspResponder
     {
-        Task<OcspHttpResponse> Respond(OcspHttpRequest httpRequest);
+        System.Threading.Tasks.Task<OcspHttpResponse> Respond(OcspHttpRequest httpRequest);
     }
 }

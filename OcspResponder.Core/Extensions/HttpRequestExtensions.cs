@@ -1,5 +1,3 @@
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace OcspResponder.Core.Extensions
 {
@@ -13,7 +11,7 @@ namespace OcspResponder.Core.Extensions
         /// </summary>
         /// <param name="requestMessage"><see cref="HttpRequestMessage"/></param>
         /// <returns><see cref="OcspHttpRequest"/></returns>
-        public static async Task<OcspHttpRequest> ToOcspHttpRequest(this HttpRequestMessage requestMessage)
+        public static async System.Threading.Tasks.Task<OcspHttpRequest> ToOcspHttpRequest(this System.Net.Http.HttpRequestMessage requestMessage)
         {
             var httpRequestBase = new OcspHttpRequest
             {

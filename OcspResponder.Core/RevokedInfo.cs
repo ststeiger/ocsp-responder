@@ -1,4 +1,4 @@
-using System;
+
 
 namespace OcspResponder.Core
 {
@@ -10,7 +10,7 @@ namespace OcspResponder.Core
         /// <summary>
         /// When it was revoked
         /// </summary>
-        public DateTimeOffset Date { get; set; }
+        public System.DateTimeOffset Date { get; set; }
 
         /// <summary>
         /// Reason for revocation

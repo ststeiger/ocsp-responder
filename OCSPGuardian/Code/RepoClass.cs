@@ -1,9 +1,9 @@
 ﻿
 namespace OCSPGuardian
-{
+{ 
 
 
-    public class RepoClass
+    public class RepoClass 
         : OcspResponder.Core.IOcspResponderRepository
     {
 
@@ -14,16 +14,23 @@ namespace OCSPGuardian
         public RepoClass()
         {
             // TODO: load root cert and private key from file 
-            string location = @"D:\lolbot\CORaaaa\skynet\skynet.pfx";
+            string location = "/etc/COR/skynet/skynet.pfx";
+
+            if(System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                location = @"D:\lolbot\CORaaaa\skynet\skynet.pfx";
+
             CertificateInfoDotNet cert = DotNetCertificateLoader.LoadPfxCertificate(location, "")!;
             this.m_rootCertificate = cert.Certificate!;
             this.m_rootCertPrivateKey = cert.PrivateKey!;
-        }
-
+        } // End Constructor 
 
 
         void System.IDisposable.Dispose()
-        {  } // Dispose certificate if loaded 
+        {
+            this.m_rootCertificate.Dispose();
+            this.m_rootCertPrivateKey.Dispose();
+        } // End Interface IDisposable.Dispose 
+
 
 
         // provides the chain of certificates up to the trusted root for the provided issuer certificate.
@@ -34,7 +41,7 @@ namespace OCSPGuardian
             return await System.Threading.Tasks.Task.FromResult(
                 new System.Security.Cryptography.X509Certificates.X509Certificate2[] { issuerCertificate }
             );
-        }
+        } // End Task GetChain 
 
 
         // The method should return a list of issuer certificates that the OCSP responder can validate.
@@ -46,7 +53,7 @@ namespace OCSPGuardian
             };
 
             return await System.Threading.Tasks.Task.FromResult(ls);
-        }
+        } // End Task GetIssuerCertificates 
 
 
         // so basically, GetNextUpdate is a value that tells the client how long to cache the result until it needs to re-inquire
@@ -54,14 +61,14 @@ namespace OCSPGuardian
         {
             System.TimeSpan nextUpdateInterval = System.TimeSpan.FromDays(1); // TotalHours >= 1 && TotalDays < 28
             return await System.Threading.Tasks.Task.FromResult(System.DateTimeOffset.UtcNow + nextUpdateInterval);
-        }
+        } // End Task GetNextUpdate 
 
 
         async System.Threading.Tasks.Task<System.Security.Cryptography.AsymmetricAlgorithm>
             OcspResponder.Core.IOcspResponderRepository.GetResponderPrivateKey(System.Security.Cryptography.X509Certificates.X509Certificate2 caCertificate)
         {
             return await System.Threading.Tasks.Task.FromResult(this.m_rootCertPrivateKey);
-        }
+        } // End Task GetResponderPrivateKey 
 
 
         async System.Threading.Tasks.Task<OcspResponder.Core.CaCompromisedStatus> OcspResponder.Core.IOcspResponderRepository.IsCaCompromised(
@@ -75,7 +82,7 @@ namespace OCSPGuardian
                 stat.CompromisedDate= System.DateTime.UtcNow;
 
             return await System.Threading.Tasks.Task.FromResult(stat);
-        }
+        } // End Task IsCaCompromised 
 
 
         async System.Threading.Tasks.Task<bool> OcspResponder.Core.IOcspResponderRepository.SerialExists(
@@ -84,7 +91,7 @@ namespace OCSPGuardian
         )
         {
             return await System.Threading.Tasks.Task.FromResult( true);
-        }
+        } // End Task SerialExists
 
 
         async System.Threading.Tasks.Task<OcspResponder.Core.CertificateRevocationStatus>
@@ -102,10 +109,10 @@ namespace OCSPGuardian
             //if (revocationTimestamp.Year < 1970) throw new ArgumentOutOfRangeException(nameof(revokedOn), revokedOn, "Invalid revocation timestamp.");
 
             return await System.Threading.Tasks.Task.FromResult(stat);
-        }
+        } // End Task SerialIsRevoked
 
 
-    }
+    } // End Class RepoClass 
 
 
-}
+} // End Namespace 

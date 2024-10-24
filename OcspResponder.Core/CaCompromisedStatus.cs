@@ -1,4 +1,3 @@
-using System;
 
 namespace OcspResponder.Core
 {
@@ -15,6 +14,6 @@ namespace OcspResponder.Core
         /// <summary>
         /// When it was compromised
         /// </summary>
-        public DateTimeOffset? CompromisedDate { get; set; }
+        public System.DateTimeOffset? CompromisedDate { get; set; }
     }
 }

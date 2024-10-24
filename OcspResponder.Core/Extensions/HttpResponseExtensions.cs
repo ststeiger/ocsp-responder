@@ -1,4 +1,3 @@
-using System.Net.Http;
 
 namespace OcspResponder.Core.Extensions
 {
@@ -12,11 +11,11 @@ namespace OcspResponder.Core.Extensions
         /// </summary>
         /// <param name="ocspHttpResponse"><see cref="OcspHttpResponse"/></param>
         /// <returns><see cref="HttpResponseMessage"/></returns>
-        public static HttpResponseMessage ToHttpResponseMessage(this OcspHttpResponse ocspHttpResponse)
+        public static System.Net.Http.HttpResponseMessage ToHttpResponseMessage(this OcspHttpResponse ocspHttpResponse)
         {
-            var httpResponseMessage = new HttpResponseMessage(ocspHttpResponse.Status)
+            var httpResponseMessage = new System.Net.Http.HttpResponseMessage(ocspHttpResponse.Status)
             {
-                Content = new ByteArrayContent(ocspHttpResponse.Content)
+                Content = new System.Net.Http.ByteArrayContent(ocspHttpResponse.Content)
             };
 
             httpResponseMessage.Content.Headers.ContentType.MediaType = ocspHttpResponse.MediaType;
