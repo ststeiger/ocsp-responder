@@ -33,8 +33,6 @@ namespace OCSPGuardian
             ApplicationHttpsRedirectPolicy.ConfigureHttpsRedirection(builder.Services, builder.Configuration);
             builder.Services.AddSingleton(builder.Environment);
 
-            
-
 
 
             // Add services to the container.
@@ -86,8 +84,10 @@ namespace OCSPGuardian
 
             // POST endpoint for OCSP requests without a parameter
             app.MapPost("/api/ocsp", OcspHandler.HandlePost);
-    
 
+
+            app.MapGet("/api/crl", CrlGenerator.HandleGet);
+            
 
             // openssl ocsp -issuer ca_cert.pem -cert server_cert.pem -text -url http://ocsp.provider.com 
 

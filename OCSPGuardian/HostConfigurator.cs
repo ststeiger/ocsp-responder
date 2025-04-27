@@ -2,9 +2,10 @@
 
 namespace OCSPGuardian
 {
+    using libWebAppBasics;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.Options;
+
 
     public class HostConfigurator
     {
@@ -15,6 +16,24 @@ namespace OCSPGuardian
             Microsoft.Extensions.Hosting.SystemdHostBuilderExtensions.UseSystemd(hostBuilder);
         } // End Sub ConfigureHost 
 
+        private static System.Security.Cryptography.X509Certificates.X509Certificate2? 
+            LoadPemCertificate()
+        {
+            string pemKey = SecretManager.GetSecret<string>("skynet_key");
+            string pemCert = SecretManager.GetSecret<string>("skynet_cert");
+
+            System.Security.Cryptography.X509Certificates.X509Certificate2 ca = System.Security.Cryptography.X509Certificates.X509Certificate2.CreateFromPem(pemCert);
+
+            System.Security.Cryptography.RSA rsa = System.Security.Cryptography.RSA.Create();
+            rsa.ImportFromPem(pemKey);
+            System.Security.Cryptography.X509Certificates.X509Certificate2 b = System.Security.Cryptography.X509Certificates
+                .RSACertificateExtensions.CopyWithPrivateKey(ca, rsa);
+
+            if (b.HasPrivateKey)
+                return b;
+
+            return null;
+        }
 
         private static void ConfigureWebHost(
             Microsoft.AspNetCore.Hosting.IWebHostBuilder webHostBuilder,
@@ -33,8 +52,12 @@ namespace OCSPGuardian
             if (isWindows)
                 location = @"D:\lolbot\CORaaaa\skynet\skynet.pfx";
 
-            CertificateInfoDotNet cert = DotNetCertificateLoader.LoadPfxCertificate(location, "")!;
-            
+            // CertificateInfoDotNet cert = DotNetCertificateLoader.LoadPfxCertificate(location, "")!;
+            System.Security.Cryptography.X509Certificates.X509Certificate2 caCert = LoadPemCertificate();
+
+            byte[] a = SimpleChallengeResponder.SelfSigned.CreateSelfSignedCertificate("");
+
+
 
             libWebAppBasics.PseudoUrl url = configuration.GetValue<string?>("Kestrel:EndPoints:Https:Url", null)!;
             int listenPort = 5667;
@@ -50,11 +73,17 @@ namespace OCSPGuardian
                     // serverOptions.Limits.MaxRequestBodySize = 52428800;
                     serverOptions.AddServerHeader = false;
                     serverOptions.AllowSynchronousIO = false;
- 
+
                     serverOptions.ListenAnyIP(listenPort,
                     delegate (Microsoft.AspNetCore.Server.Kestrel.Core.ListenOptions listenOptions)
                     {
-                        listenOptions.UseHttps(cert.Certificate!);
+                        // listenOptions.UseHttps(cert.Certificate!);
+                        // listenOptions.UseHttps(caCert!);
+
+                        System.Security.Cryptography.X509Certificates.X509Certificate2 cert = 
+                            new System.Security.Cryptography.X509Certificates.X509Certificate2(a);
+                        listenOptions.UseHttps(cert);
+
                     }
                 );
                 }
