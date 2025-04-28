@@ -33,10 +33,11 @@ namespace OCSPGuardian
             ApplicationHttpsRedirectPolicy.ConfigureHttpsRedirection(builder.Services, builder.Configuration);
             builder.Services.AddSingleton(builder.Environment);
 
+            builder.Services.AddTransient<Model.MainNavigationData>();
 
 
             // Add services to the container.
-            // builder.Services.AddRazorPages();
+            builder.Services.AddRazorPages();
 
             // Register IOcspLogger
             builder.Services.AddSingleton<global::OcspResponder.Core.IOcspLogger, SimpleOcspLogger>();
@@ -78,6 +79,7 @@ namespace OCSPGuardian
 
             // app.UseAuthorization();
 
+            // certs.henri-bernhard.ch
 
             // GET endpoint for the OCSP request with encoded parameter
             app.MapGet("/api/ocsp/{encoded}", OcspHandler.HandleGet);
@@ -87,7 +89,7 @@ namespace OCSPGuardian
 
 
             app.MapGet("/api/crl", CrlGenerator.HandleGet);
-            
+
 
             // openssl ocsp -issuer ca_cert.pem -cert server_cert.pem -text -url http://ocsp.provider.com 
 
@@ -96,7 +98,7 @@ namespace OCSPGuardian
             // curl http://some.ocsp.url/  > resp.der
             // openssl ocsp -respin resp.der - text
 
-            // app.MapRazorPages();
+            app.MapRazorPages();
             await app.RunAsync();
 
             return 0;

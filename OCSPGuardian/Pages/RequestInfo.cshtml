@@ -1,0 +1,217 @@
+@page
+@model Pages.RequestInfoModel
+@{
+    Layout = "~/Pages/Shared/_DefaultLayout.master.cshtml";
+
+
+    ViewData["Title"] = "Request Information";
+}
+<style>
+
+    main
+    {
+        justify-content: center; /* Centers horizontally */
+        align-items: center; /* Centers vertically */
+    }
+
+    .container-requestinfo
+    {
+        padding: 1cm;
+    }
+
+    .container-requestinfo th
+    {
+        text-align: left;
+        background-color: black;
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .btn-primary
+    {
+        background: rgba(0, 123, 255, 0.1); /* Semi-transparent background */
+        color: #007bff;
+        border: 2px solid rgba(0, 123, 255, 0.4); /* Transparent border */
+        padding: 12px 24px;
+        font-size: 16px;
+        border-radius: 5px;
+        backdrop-filter: blur(10px); /* Frosted glass effect */
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3); /* Light shadow */
+        transition: all 0.3s ease-in-out;
+    }
+
+        .btn-primary:hover
+        {
+            background: rgba(0, 123, 255, 0.2);
+            border: 2px solid rgba(0, 123, 255, 0.7);
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.5); /* Stronger shadow */
+            #transform: translateY(-2px);
+        }
+
+</style>
+
+<div class="container-requestinfo">
+    <div class="container mt-4">
+        <h1 class="mb-4">Request Information</h1>
+        <br /><br />
+
+        <h2>IP ADDRESSES</h2>
+        <p>Client IP Address: @Model.ClientIP</p>
+        <p>X-Forwarded-For: @Model.ClientIpForwarded</p>
+        <br /><br />
+
+
+        @if (Model.ProxyProtocolFeature != null && Model.ShowProxyInfo)
+        {
+            <h2>Proxy Protocol Feature</h2>
+            <p>Source IP: @Model.ProxyProtocolFeature.SourceIp</p>
+            <p>Source Port: @Model.ProxyProtocolFeature.SourcePort</p>
+            <p>Destination IP: @Model.ProxyProtocolFeature.DestinationIp</p>
+            <p>Destination Port: @Model.ProxyProtocolFeature.DestinationPort</p>
+            <p>Link ID: @Model.ProxyProtocolFeature.LinkId</p>
+            <br />
+            <br />
+        }
+        else
+        {
+            <h2>Proxy Protocol Feature</h2>
+            @if (Model.ProxyProtocolFeature != null && !Model.ShowProxyInfo)
+            {
+                <p>Proxy Protocol Feature not displayed for security reasons.</p>
+            }
+            else
+            {
+                <p>Proxy Protocol Feature not found.</p>    
+            }
+            <br />
+            <br />
+        }
+
+
+        <!-- HTTP Headers Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">HTTP Headers</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Header Name</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var header in Model.Headers)
+                            {
+                                <tr>
+                                    <td>@header.Key</td>
+                                    <td>@header.Value</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <br /><br /><br />
+
+        <!-- POST Data Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">POST Data</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Field Name</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var post in Model.PostData)
+                            {
+                                <tr>
+                                    <td>@post.Key</td>
+                                    <td>@post.Value</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <br /><br /><br />
+
+        @if (Model.WITH_INSECURE_DATA)
+        { 
+
+        <!-- Cookies Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Cookies</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Value</th>
+                                <!--
+                                <th>HttpOnly</th>
+                                <th>Secure</th>
+                                <th>Expires</th>
+                                <th>Path</th>
+                                 -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cookie in Model.Cookies)
+                            {
+                                <tr>
+                                    <td>@cookie.Key</td>
+                                    <td>@cookie.Value</td>
+                                    <!--
+                                    <td>N/A</td>
+                                    <td>N/A</td>
+                                    <td>N/A</td>
+                                    <td>N/A</td>
+                                     -->
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <br /><br /><br />
+        }
+
+        <!-- Test Form -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Test POST Form</h2>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label for="testField" class="form-label">Test Field</label>
+                        <input type="text" class="form-control" id="testField" name="testField" placeholder="Enter some text">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>

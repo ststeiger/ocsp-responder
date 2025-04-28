@@ -1,12 +1,14 @@
 ﻿
-using libWebAppBasics;
-
 namespace OCSPGuardian
 {
+
+    using libWebAppBasics;
 
 
     public static class CrlGenerator
     {
+
+
         private static Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair ReadAsymmetricKeyParameter(System.IO.TextReader textReader)
         {
             Org.BouncyCastle.OpenSsl.PemReader pemReader = new Org.BouncyCastle.OpenSsl.PemReader(textReader);
@@ -40,26 +42,7 @@ namespace OCSPGuardian
         } // End Function PemStringToX509 
 
 
-        public static async System.Threading.Tasks.Task HandleGet(
-           Microsoft.AspNetCore.Http.HttpContext context
-        )
-        {
-            string pemKey = SecretManager.GetSecret<string>("skynet_key");
-            string pemCert = SecretManager.GetSecret<string>("skynet_cert");
-
-            Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair caCipherKeyPair = ReadAsymmetricKeyParameter(pemKey);
-            Org.BouncyCastle.X509.X509Certificate caCertificate = PemStringToX509(pemCert);
-
-            // System.Collections.Generic.IEnumerable<Org.BouncyCastle.Math.BigInteger>? revokedSerialNumbers revokedCerts = await GetRevokedSerialsFromDbAsync(); // your DB code
-            // byte[] crl = GenerateCrl(caPrivateKey, caCertificate, revokedCerts);
-            byte[] crl = GenerateCrl(caCipherKeyPair.Private, caCertificate, null);
-
-            context.Response.ContentType = "application/pkix-crl";
-            context.Response.Headers.CacheControl = "public, max-age=300";
-            await context.Response.Body.WriteAsync(crl, 0, crl.Length);
-        }
-
-        public static byte[] GenerateCrl(
+        private static byte[] GenerateCrl(
             Org.BouncyCastle.Crypto.AsymmetricKeyParameter caPrivateKey,
             Org.BouncyCastle.X509.X509Certificate caCertificate,
             System.Collections.Generic.IEnumerable<
@@ -121,13 +104,33 @@ namespace OCSPGuardian
         } // End Function GenerateCrl 
 
 
-        public static byte[] GenerateCrl(
+        private static byte[] GenerateCrl(
             Org.BouncyCastle.Crypto.AsymmetricKeyParameter caPrivateKey,
             Org.BouncyCastle.X509.X509Certificate caCertificate
         )
         {
             return GenerateCrl(caPrivateKey, caCertificate, null);
         } // End Function GenerateCrl 
+
+
+        public static async System.Threading.Tasks.Task HandleGet(
+           Microsoft.AspNetCore.Http.HttpContext context
+        )
+        {
+            string pemKey = SecretManager.GetSecret<string>("skynet_key");
+            string pemCert = SecretManager.GetSecret<string>("skynet_cert");
+
+            Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair caCipherKeyPair = ReadAsymmetricKeyParameter(pemKey);
+            Org.BouncyCastle.X509.X509Certificate caCertificate = PemStringToX509(pemCert);
+
+            // System.Collections.Generic.IEnumerable<Org.BouncyCastle.Math.BigInteger>? revokedSerialNumbers revokedCerts = await GetRevokedSerialsFromDbAsync(); // your DB code
+            // byte[] crl = GenerateCrl(caPrivateKey, caCertificate, revokedCerts);
+            byte[] crl = GenerateCrl(caCipherKeyPair.Private, caCertificate, null);
+
+            context.Response.ContentType = "application/pkix-crl";
+            context.Response.Headers.CacheControl = "public, max-age=300";
+            await context.Response.Body.WriteAsync(crl, 0, crl.Length);
+        } // End Task HandleGet 
 
 
     } // End Class CrlGenerator 

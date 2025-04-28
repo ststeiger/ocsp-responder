@@ -1,10 +1,23 @@
 ﻿@page
 @model IndexModel
+
+
 @{
+    // when you use a partial name for the layout, 
+    // the .cshtml extension is optional and typically omitted. 
+    // The Razor view engine will search for a file with that name 
+    // and the .cshtml extension in the configured layout locations 
+    Layout = "_DefaultLayout.master";
     ViewData["Title"] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+
+<div class="container">
+    <h1>Available Tools</h1>
+    <div class="text-center">
+        <h1 class="display-4">Welcome</h1>
+        <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    </div>
+
 </div>
