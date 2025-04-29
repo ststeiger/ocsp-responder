@@ -20,11 +20,11 @@ namespace SelfSignedCertificateGenerator
         // public PrivatePublicPemKeyPair SubjectKeyPair;
         // public PrivatePublicPemKeyPair IssuerKeyPair;
 
-        public string[] AlternativeNames;
+        public System.Collections.Generic.IEnumerable<string> AlternativeNames;
 
 
-        public System.Collections.Generic.Dictionary<string, Org.BouncyCastle.Asn1.Asn1Encodable> NonCriticalExtensions;
-        public System.Collections.Generic.Dictionary<string, Org.BouncyCastle.Asn1.Asn1Encodable> CriticalExtensions;
+        public System.Collections.Generic.IDictionary<string, Org.BouncyCastle.Asn1.Asn1Encodable> NonCriticalExtensions;
+        public System.Collections.Generic.IDictionary<string, Org.BouncyCastle.Asn1.Asn1Encodable> CriticalExtensions;
 
 
 
@@ -54,20 +54,21 @@ namespace SelfSignedCertificateGenerator
         } // End Property SubjectAlternativeNames 
 
 
-        public static Org.BouncyCastle.Asn1.DerSequence CreateSubjectAlternativeNames(string[] names)
+        public static Org.BouncyCastle.Asn1.DerSequence CreateSubjectAlternativeNames(System.Collections.Generic.IEnumerable<string> names)
         {
-            Org.BouncyCastle.Asn1.Asn1Encodable[] alternativeNames = new Org.BouncyCastle.Asn1.Asn1Encodable[names.Length];
+            System.Collections.Generic.List<Org.BouncyCastle.Asn1.Asn1Encodable> alternativeNames = 
+                new System.Collections.Generic.List<Org.BouncyCastle.Asn1.Asn1Encodable>();
 
-            for (int i = 0; i < names.Length; ++i)
+            foreach (string thisName in names)
             {
-                System.Net.IPAddress ipa;
-                if (System.Net.IPAddress.TryParse(names[i], out ipa))
-                    alternativeNames[i] = new Org.BouncyCastle.Asn1.X509.GeneralName(Org.BouncyCastle.Asn1.X509.GeneralName.IPAddress, names[i]);
+                System.Net.IPAddress? ipa;
+                if (System.Net.IPAddress.TryParse(thisName, out ipa) && ipa != null)
+                    alternativeNames.Add( new Org.BouncyCastle.Asn1.X509.GeneralName(Org.BouncyCastle.Asn1.X509.GeneralName.IPAddress, thisName));
                 else
-                    alternativeNames[i] = new Org.BouncyCastle.Asn1.X509.GeneralName(Org.BouncyCastle.Asn1.X509.GeneralName.DnsName, names[i]);
-            } // Next i 
+                    alternativeNames.Add(new Org.BouncyCastle.Asn1.X509.GeneralName(Org.BouncyCastle.Asn1.X509.GeneralName.DnsName, thisName));
+            }
 
-            Org.BouncyCastle.Asn1.DerSequence subjectAlternativeNames = new Org.BouncyCastle.Asn1.DerSequence(alternativeNames);
+            Org.BouncyCastle.Asn1.DerSequence subjectAlternativeNames = new Org.BouncyCastle.Asn1.DerSequence(alternativeNames.ToArray());
             return subjectAlternativeNames;
         } // End Function CreateSubjectAlternativeNames 
 
@@ -165,6 +166,12 @@ namespace SelfSignedCertificateGenerator
             this.ValidFrom = validFrom;
             this.ValidTo = validTo;
         } // End Constructor 
+
+
+        public void AddAlternativeNames(System.Collections.Generic.IEnumerable<string> names)
+        {
+            this.AlternativeNames = names;
+        } // End Sub AddAlternativeNames 
 
 
         public void AddAlternativeNames(params string[] names)

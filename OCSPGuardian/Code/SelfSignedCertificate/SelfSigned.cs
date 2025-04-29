@@ -10,7 +10,8 @@ namespace SimpleChallengeResponder
     public class SelfSigned
     {
 
-        public static string[] GetAlternativeNames(string[] otherDomains)
+
+        public static System.Collections.Generic.List<string> GetAlternativeNames(string[] otherDomains)
         {
             // http://localhost
             // http://machine-name
@@ -37,7 +38,6 @@ namespace SimpleChallengeResponder
             // Enumerate IP addresses
             foreach (System.Net.IPAddress ipAddress in iphostentry.AddressList)
             {
-
                 // https://superuser.com/questions/99746/why-is-there-a-percent-sign-in-the-ipv6-address
                 // The number after the '%' is the scope ID.
 
@@ -50,11 +50,11 @@ namespace SimpleChallengeResponder
                 if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 && ipAddress.ScopeId != 0)
                     continue;
 
-                if (ipAddress.IsIPv4MappedToIPv6)
-                    ls.Add(ipAddress.MapToIPv4().ToString());
-                else
-                    ls.Add(ipAddress.ToString());
-            }
+                string ipString = ipAddress.IsIPv4MappedToIPv6 ? ipAddress.MapToIPv4().ToString():ipAddress.ToString();
+
+                if (ls.FindIndex(x => x.Equals(ipString, System.StringComparison.InvariantCultureIgnoreCase))!= -1)
+                    ls.Add(ipString);
+            } // Next ipAddress 
 
 #if false
 
@@ -79,17 +79,20 @@ namespace SimpleChallengeResponder
             }
 #endif 
 
-            return ls.ToArray();
+            return ls;
         } // End Function GetAlternativeNames 
 
 
-        public static string[] GetAlternativeNames()
+        public static  System.Collections.Generic.List<string> GetAlternativeNames()
         {
             return GetAlternativeNames(new string[0]);
         } // End Function GetAlternativeNames 
 
 
-        public static byte[] CreateSelfSignedCertificate(string[] alternativeNames, string password)
+        public static byte[] CreateSelfSignedCertificate(
+            System.Collections.Generic.IEnumerable<string> alternativeNames, 
+            string password
+        )
         {
             string pemKey = SecretManager.GetSecret<string>("skynet_key");
             string pemCert = SecretManager.GetSecret<string>("skynet_cert");
@@ -119,7 +122,7 @@ namespace SimpleChallengeResponder
 
         public static byte[] CreateSelfSignedCertificate(string password)
         {
-            string[] altNames = GetAlternativeNames();
+            System.Collections.Generic.List<string> altNames = GetAlternativeNames();
             return CreateSelfSignedCertificate(altNames, password);
         }
 
@@ -129,7 +132,7 @@ namespace SimpleChallengeResponder
             , Org.BouncyCastle.X509.X509Certificate caRoot
             , Org.BouncyCastle.Crypto.AsymmetricKeyParameter subjectPublicKey
             , Org.BouncyCastle.Crypto.AsymmetricKeyParameter rootCertPrivateKey
-            , string[] alternativeNames
+            , System.Collections.Generic.IEnumerable<string> alternativeNames 
         ) 
         {
             Org.BouncyCastle.X509.X509Certificate caSsl = null;
