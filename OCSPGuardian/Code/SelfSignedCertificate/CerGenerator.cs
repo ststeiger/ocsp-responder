@@ -90,9 +90,9 @@ namespace SelfSignedCertificateGenerator
             , Org.BouncyCastle.Security.SecureRandom secureRandom
         )
         {
-            string ocspUrl = "";// Add the OCSP URL parameter
+            string ocspUrl = "https://cert.henri-bernhard.ch/api/ocsp";// Add the OCSP URL parameter
             /// ocspUrl = "https://ocsp.example.com";
-            string crlUri = "http://yourca.com/crl/cert.crl";
+            string crlUri = "http://cert.henri-bernhard.ch/api/crl";
 
 
 
