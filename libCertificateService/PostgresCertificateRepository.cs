@@ -40,7 +40,7 @@ FROM
 		 certificate.cert_id 
 		,domain.domain_punycode 
 	 
-		,certificate.cert_certificate_pfx_data 
+		,certificate.cert_pfx_data 
 		,certificate.cert_created_at 
 		,certificate_type.ct_name 
 		,certificate_status.cstat_name 
@@ -57,6 +57,8 @@ FROM
 		ON certificate_status.cstat_id = certificate.cert_cstat_id 
 
 	WHERE CURRENT_TIMESTAMP BETWEEN certificate.cert_valid_from AND certificate.cert_valid_until 
+    AND certificate.cert_ct_id = 1 -- Single Certificate 
+	-- AND certificate.cert_ct_id = 2 -- Wildcard Certificate 
 ) AS t 
 WHERE t.cert_order = 1 
 ";
