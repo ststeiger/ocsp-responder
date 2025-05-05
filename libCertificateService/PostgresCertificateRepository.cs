@@ -30,7 +30,7 @@ namespace libCertificateService
 SELECT 
 	 t.cert_id 
 	,t.domain_punycode  
-	,t.cert_certificate_pfx_data 
+	,t.cert_pfx_data 
 	,t.cert_created_at 
 	,t.ct_name 
 	,t.cstat_name 
@@ -98,18 +98,19 @@ WHERE t.cert_order = 1
             try
             {
                 const string sql = @"
-                    SELECT 
-                        cert_domain_name AS DomainName,
-                        cert_pfx_data AS PfxData,
-                        cert_valid_from AS ValidFrom,
-                        cert_valid_until AS ValidUntil, 
-                        cert_created_at AS CreatedAt
-                    FROM certificates 
-                    WHERE cert_domain_name = @DomainName
-                    AND cert_valid_from <= NOW() 
-                    AND cert_valid_until > NOW() 
-                    ORDER BY cert_created_at DESC 
-                    LIMIT 1";
+SELECT 
+    cert_domain_name AS DomainName,
+    cert_pfx_data AS PfxData,
+    cert_valid_from AS ValidFrom,
+    cert_valid_until AS ValidUntil, 
+    cert_created_at AS CreatedAt
+FROM certificates 
+WHERE cert_domain_name = @DomainName
+AND cert_valid_from <= NOW() 
+AND cert_valid_until > NOW() 
+ORDER BY cert_created_at DESC 
+LIMIT 1
+";
 
                 Certificate certificate = null;
 

@@ -24,7 +24,7 @@ namespace libCertificateService
 
 
         public DatabaseFactory(DatabaseOptions options)
-        {
+        { 
         }
 
 
