@@ -119,7 +119,6 @@ namespace OCSPGuardian
         )
         {
             
-
             if (this.m_certificateService != null )
             {
                 if (string.IsNullOrEmpty(name))
@@ -131,7 +130,7 @@ namespace OCSPGuardian
                         name = ipe.Address.ToString();
                 }
 
-                System.Security.Cryptography.X509Certificates.X509Certificate2 cert = this.m_certificateService.GetCertificate2(name);
+                System.Security.Cryptography.X509Certificates.X509Certificate2 cert = this.m_certificateService.SelectCertificate(name);
                 if(cert != null)
                     return cert;
 #if false
@@ -170,7 +169,7 @@ namespace OCSPGuardian
                     }
 #endif
             } // End if (this.m_certificateService != null ) 
-
+            
             throw new System.IO.InvalidDataException("No certificate for name \"" + name + "\".");
         } // End Function CertificateSelector 
 

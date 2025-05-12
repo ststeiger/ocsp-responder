@@ -1,8 +1,8 @@
 ﻿
 namespace libCertificateService
 {
-
-
+    
+    
     public class CertificateService 
         : ICertificateService
     {
@@ -54,9 +54,13 @@ namespace libCertificateService
             // Example for local IP
             this.m_selfSignedCertificates.TryAdd("127.0.0.1", localhost);
         } // End Sub InitializeSelfSignedCertificates 
-
-
-        public async System.Threading.Tasks.Task<Certificate> GetCertificate(string domainName)
+        
+        public System.Security.Cryptography.X509Certificates.X509Certificate2 SelectCertificate(string domainName)
+        {
+            return null;
+        }
+        
+        public async System.Threading.Tasks.Task<Certificate> GetCertificateAsync(string domainName)
         {
             // First check self-signed certificates
             if (this.m_selfSignedCertificates.TryGetValue(domainName, out Certificate selfSignedCert))
@@ -119,11 +123,11 @@ namespace libCertificateService
                 Microsoft.Extensions.Logging.LoggerExtensions.LogError(this.m_logger, ex, "Error refreshing certificates");
                 throw; // Re-throw the exception to be handled by calling code
             } // End Catch 
-
+            
         } // End Task RefreshCertificates 
-
-
+        
+        
     } // End Class CertificateService 
-
-
+    
+    
 } // End Namespace 
