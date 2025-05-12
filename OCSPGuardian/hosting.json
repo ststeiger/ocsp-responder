@@ -7,6 +7,11 @@
         "Url": "http://*:5667"
       }
     }
+  },
+
+  "Database": {
+    "ConnectionString": "Host=localhost;Port=5432;Database=mydatabase;Username=postgres;Password=mysecretpassword;",
+    "Provider": "Microsoft.Data.SqlClient.SqlClientFactory, Microsoft.Data.SqlClient"
   }
 
 }

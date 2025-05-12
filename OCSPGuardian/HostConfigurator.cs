@@ -2,10 +2,9 @@
 
 namespace OCSPGuardian
 {
-    using libWebAppBasics;
+    
     using Microsoft.AspNetCore.Hosting;
-    using Microsoft.Extensions.Configuration;
-
+    
 
     public class HostConfigurator
     {
@@ -16,11 +15,12 @@ namespace OCSPGuardian
             Microsoft.Extensions.Hosting.SystemdHostBuilderExtensions.UseSystemd(hostBuilder);
         } // End Sub ConfigureHost 
 
+
         private static System.Security.Cryptography.X509Certificates.X509Certificate2? 
             LoadPemCertificate()
         {
-            string pemKey = SecretManager.GetSecret<string>("skynet_key");
-            string pemCert = SecretManager.GetSecret<string>("skynet_cert");
+            string pemKey = libWebAppBasics.SecretManager.GetSecret<string>("skynet_key");
+            string pemCert = libWebAppBasics.SecretManager.GetSecret<string>("skynet_cert");
 
             System.Security.Cryptography.X509Certificates.X509Certificate2 ca = System.Security.Cryptography.X509Certificates.X509Certificate2.CreateFromPem(pemCert);
 
@@ -35,13 +35,13 @@ namespace OCSPGuardian
             return null;
         }
 
+
         private static void ConfigureWebHost(
             Microsoft.AspNetCore.Hosting.IWebHostBuilder webHostBuilder,
             Microsoft.Extensions.Configuration.IConfigurationManager configuration,
             bool isWindows
         )
         {
-
             bool usesIIS = (isWindows && System.Environment.GetEnvironmentVariable("APP_POOL_ID") is string) ? true : false;
 
             if (usesIIS)
@@ -53,7 +53,8 @@ namespace OCSPGuardian
             {
                 byte[] selfSignedCertificateData = SimpleChallengeResponder.SelfSigned.CreateSelfSignedCertificate("");
 
-                libWebAppBasics.PseudoUrl url = configuration.GetValue<string?>("Kestrel:EndPoints:Https:Url", null)!;
+
+                libWebAppBasics.PseudoUrl url = Microsoft.Extensions.Configuration.ConfigurationBinder.GetValue<string>(configuration, "Kestrel:EndPoints:Https:Url", "")!;
                 int listenPort = 5667;
                 if (url != null)
                     listenPort = url.Port;
