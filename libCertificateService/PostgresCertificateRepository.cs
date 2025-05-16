@@ -22,7 +22,17 @@ namespace libCertificateService
         } // End Constructor 
 
 
-        public System.Collections.Generic.List<Certificate> GetAllValidCertificates()
+
+        public async System.Threading.Tasks.Task<System.Collections.Generic.List<Certificate>>
+            GetAllValidCertificates()
+        {
+            await System.Threading.Tasks.Task.CompletedTask;
+
+            return GetAllValidCertificates2()!;
+        }
+
+
+        public System.Collections.Generic.List<Certificate> GetAllValidCertificates2()
         {
             try
             {

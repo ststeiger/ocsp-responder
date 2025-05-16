@@ -45,7 +45,7 @@ public class Program
                                 "destination1", new Yarp.ReverseProxy.Configuration.DestinationConfig()
                                 {
                                     Address = "http://localhost:11434/"
-                                } 
+                                }
                             }
                         }
                     }

@@ -58,7 +58,7 @@ namespace CertificateManagement
         )
         {
             // Register services
-            services.AddSingleton<ICertificateRepository, CertificateRepository>();
+            services.AddSingleton<ICertificateRepository, PostgresCertificateRepository>();
             services.AddSingleton<ICertificateService, CertificateService>();
 
 

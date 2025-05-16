@@ -1,7 +1,12 @@
 ﻿
 namespace libCertificateService
 {
+    public interface ICertificateRepository
+    {
+        System.Threading.Tasks.Task<Certificate> GetLatestValidCertificateForDomain(string domain);
+        System.Threading.Tasks.Task<System.Collections.Generic.List<Certificate>> GetAllValidCertificates();
 
+    }
 
     public interface ICertificateService
     {
@@ -10,7 +15,6 @@ namespace libCertificateService
 
         System.Threading.Tasks.Task<System.Security.Cryptography.X509Certificates.X509Certificate2> 
             GetCertificate2Async(string domainName);
-
 
         System.Threading.Tasks.Task RefreshCertificates();
     }

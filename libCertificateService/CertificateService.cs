@@ -55,8 +55,21 @@ namespace libCertificateService
             this.m_selfSignedCertificates.TryAdd("127.0.0.1", localhost);
         } // End Sub InitializeSelfSignedCertificates 
 
+        
+        public System.Security.Cryptography.X509Certificates.X509Certificate2 GetCertificate2(string domainName)
+        {
+            return null!;
+        }
 
-        public async System.Threading.Tasks.Task<Certificate> GetCertificate(string domainName)
+        public async System.Threading.Tasks.Task<
+            System.Security.Cryptography.X509Certificates.X509Certificate2
+            > GetCertificate2Async(string domainName)
+        {
+            await System.Threading.Tasks.Task.CompletedTask;
+            return null!;
+        }
+
+        public async System.Threading.Tasks.Task<Certificate> GetCertificateAsync(string domainName)
         {
             // First check self-signed certificates
             if (this.m_selfSignedCertificates.TryGetValue(domainName, out Certificate selfSignedCert))
@@ -78,7 +91,7 @@ namespace libCertificateService
                 return certificate;
             } // End if (certificate != null) 
 
-            return null;
+            return null!;
         } // End Task GetCertificate 
 
 
