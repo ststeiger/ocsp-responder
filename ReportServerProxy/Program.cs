@@ -27,9 +27,28 @@ public class Program
                         ClusterId = "localCluster",
                         Match = new Yarp.ReverseProxy.Configuration.RouteMatch
                         {
-                            Path = "{**catch-all}"
+                            // Path = "{**catch-all}"
+                            Path = "/VIRT_DIR_X/{**catch-all}"
                             // Path = "/ReportServer/{**catch-all}"
-                        },
+                        }
+                        
+                        ,Transforms = new System.Collections.Generic.List<
+                            System.Collections.Generic.Dictionary<string, string>
+                        >()
+                        {
+                            // Path rewrite transformation
+                            new System.Collections.Generic.Dictionary<string, string>
+                            {
+                                  { "PathRemovePrefix", "/VIRT_DIR_X" }
+
+                            },
+                            // Cookie domain transformation
+                            //new System.Collections.Generic.Dictionary<string, string>
+                            //{
+                            //    { "RequestHeaderOriginalHost", "true" }
+                            //}
+                        }
+                        
                         /*
                         // Configure transforms for this route
                         Transforms = new System.Collections.Generic.List<
@@ -72,7 +91,7 @@ public class Program
                                 "destination1", new Yarp.ReverseProxy.Configuration.DestinationConfig()
                                 {
                                     // Address = "http://localhost:11434/"
-                                    Address = "https://reportserver.example.com"
+                                    Address = "https://reportsrv2.cor-asp.ch"
                                 }
                             }
                         }

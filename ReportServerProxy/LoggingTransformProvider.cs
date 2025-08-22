@@ -1,8 +1,10 @@
 
 namespace ReportServerProxy;
 
+using System.Data.Common;
 using System.Linq;
 using Yarp.ReverseProxy.Transforms; // for AddRequestTransform, AddResponseTransform
+using static System.Net.Mime.MediaTypeNames;
 
 public class LoggingTransformProvider
     : Yarp.ReverseProxy.Transforms.Builder.ITransformProvider
@@ -22,6 +24,9 @@ public class LoggingTransformProvider
     {
         context.AddRequestTransform(async transformContext =>
         {
+            // is ignored by SSRS
+            // transformContext.ProxyRequest.Headers.TryAddWithoutValidation("X-Forwarded-Prefix", "/VIRT_DIR_X");
+
             Microsoft.AspNetCore.Http.HttpRequest request = transformContext.HttpContext.Request;
             Microsoft.AspNetCore.Http.HttpRequestRewindExtensions.EnableBuffering(request);
 
@@ -29,11 +34,17 @@ public class LoggingTransformProvider
                        request.Body,
                        System.Text.Encoding.UTF8,
                        leaveOpen: true
-                       )
+                )
             )
             {
                 string body = await tr.ReadToEndAsync();
                 request.Body.Position = 0;
+
+                if (body.IndexOf("/VIRT_DIR_X") != -1)
+                {
+                    System.Console.WriteLine(body);
+                }
+
 
                 System.Console.WriteLine($"[REQUEST] {request.Method} {request.Path}");
                 System.Console.WriteLine(body);
@@ -95,6 +106,10 @@ public class LoggingTransformProvider
                                 newUriBuilder.Scheme = proxyScheme;
                                 newUriBuilder.Host = proxyHost.Host;
 
+                                if (newUriBuilder.Path != null && newUriBuilder.Path.StartsWith("/ReportServer", System.StringComparison.InvariantCultureIgnoreCase))
+                                    newUriBuilder.Path = "/VIRT_DIR_X" + newUriBuilder.Path;
+
+
                                 // Set the port based on the incoming request
                                 if (proxyHost.Port.HasValue)
                                 {
@@ -128,6 +143,21 @@ public class LoggingTransformProvider
                         }
                         else
                         {
+                            if (originalLocation.StartsWith("/ReportServer", System.StringComparison.InvariantCultureIgnoreCase))
+                            { 
+                                // Important: Modify the output headers instead of the proxy response headers
+                                if (outputHeaders.ContainsKey("Location"))
+                                {
+                                    // Remove the original Location header
+                                    outputHeaders.Remove("Location");
+                                }
+
+                                string newLocation = "/VIRT_DIR_X" + originalLocation;
+                                // Add the rewritten Location header to output headers
+                                outputHeaders.Add("Location", newLocation);
+                            }
+
+
                             System.Console.WriteLine($"Failed to parse Location header as URI: {originalLocation}");
                         }
                     }
@@ -142,15 +172,40 @@ public class LoggingTransformProvider
                     // Log it
                     string contentString = System.Text.Encoding.UTF8.GetString(originalContent);
 
+
+                    bool isGzip = false;
+
                     // Try to decompress if it's gzipped
                     foreach (string? thisEncoding in outputHeaders["Content-Encoding"])
                     {
                         if ("gzip".Equals(thisEncoding, System.StringComparison.InvariantCultureIgnoreCase))
                         {
-                            contentString = GzipHelper.DecompressGzipBytesToString(originalContent, System.Text.Encoding.UTF8);
+                            isGzip = true;
+                    
                         }
                     }
 
+
+                    if(isGzip)
+                        contentString = GzipHelper.DecompressGzipBytesToString(originalContent, System.Text.Encoding.UTF8);
+
+
+                    // if (outputHeaders.ContentType.ToString().Contains("text/html") == true)
+                    if (contentString.IndexOf("/ReportServer") != -1)
+                    {
+                        System.Console.WriteLine(outputHeaders.ContentType);
+
+                        string modified = contentString.Replace("src=\"/ReportServer", "src=\"/VIRT_DIR_X/ReportServer");
+                        modified = modified.Replace("href=\"/ReportServer", "href=\"/VIRT_DIR_X/ReportServer");
+                        modified = modified.Replace("url(\"/ReportServer", "url(\"/VIRT_DIR_X/ReportServer");
+                        modified = modified.Replace("\":\"/ReportServer", "\":\"/VIRT_DIR_X/ReportServer");
+                        modified = modified.Replace("\\\":\\\"/ReportServer", "\\\":\\\"/VIRT_DIR_X/ReportServer");
+
+
+                        if (isGzip)
+                            originalContent = await GzipHelper.Compress(modified, new System.Text.UTF8Encoding(false));
+                        // else originalContent = System.Text.Encoding.UTF8.GetBytes(modified);
+                    }
 
                     System.Console.WriteLine($"[RESPONSE] {transformContext.HttpContext.Request.Method} {transformContext.HttpContext.Request.Path}");
                     System.Console.WriteLine(contentString);
