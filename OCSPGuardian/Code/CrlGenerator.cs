@@ -19,7 +19,7 @@ namespace OCSPGuardian
 
         private static Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair ReadAsymmetricKeyParameter(string pemString)
         {
-            Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair para = null;
+            Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair para;
 
             using (System.IO.TextReader tr = new System.IO.StringReader(pemString))
             {
@@ -117,8 +117,8 @@ namespace OCSPGuardian
            Microsoft.AspNetCore.Http.HttpContext context
         )
         {
-            string pemKey = SecretManager.GetSecret<string>("skynet_key");
-            string pemCert = SecretManager.GetSecret<string>("skynet_cert");
+            string pemKey = SecretManager.GetSecretOrThrow<string>("skynet_key");
+            string pemCert = SecretManager.GetSecretOrThrow<string>("skynet_cert");
 
             Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair caCipherKeyPair = ReadAsymmetricKeyParameter(pemKey);
             Org.BouncyCastle.X509.X509Certificate caCertificate = PemStringToX509(pemCert);

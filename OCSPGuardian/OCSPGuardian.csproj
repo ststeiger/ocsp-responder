@@ -7,6 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Code\SelfSignedCertificate\**" />
+    <Content Remove="Code\SelfSignedCertificate\**" />
+    <EmbeddedResource Remove="Code\SelfSignedCertificate\**" />
+    <None Remove="Code\SelfSignedCertificate\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Code\SecretManager.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.1" />
     <PackageReference Include="Quartz" Version="3.14.0" />
     <PackageReference Include="Quartz.AspNetCore" Version="3.14.0" />

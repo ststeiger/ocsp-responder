@@ -19,8 +19,8 @@ namespace OCSPGuardian
         private static System.Security.Cryptography.X509Certificates.X509Certificate2? 
             LoadPemCertificate()
         {
-            string pemKey = libWebAppBasics.SecretManager.GetSecret<string>("skynet_key");
-            string pemCert = libWebAppBasics.SecretManager.GetSecret<string>("skynet_cert");
+            string pemKey = libWebAppBasics.SecretManager.GetSecretOrThrow<string>("skynet_key");
+            string pemCert = libWebAppBasics.SecretManager.GetSecretOrThrow<string>("skynet_cert");
 
             System.Security.Cryptography.X509Certificates.X509Certificate2 ca = System.Security.Cryptography.X509Certificates.X509Certificate2.CreateFromPem(pemCert);
 
@@ -56,8 +56,8 @@ namespace OCSPGuardian
 
                 libWebAppBasics.PseudoUrl url = Microsoft.Extensions.Configuration.ConfigurationBinder.GetValue<string>(configuration, "Kestrel:EndPoints:Https:Url", "")!;
                 int listenPort = 5667;
-                if (url != null)
-                    listenPort = url.Port;
+                if (url != null && url.Port.HasValue)
+                    listenPort = url.Port.Value;
 
                 // Without calling UseKestrel, the application would not run on Kestrel.
                 webHostBuilder.UseKestrel(

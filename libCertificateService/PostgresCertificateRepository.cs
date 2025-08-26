@@ -73,7 +73,7 @@ FROM
 WHERE t.cert_order = 1 
 ";
 
-                System.Collections.Generic.List<Certificate> lsCertificates = null;
+                System.Collections.Generic.List<Certificate> lsCertificates;
 
                 using (System.Data.Common.DbConnection connection = this.m_connectionFactory.Connection)
                 {
@@ -98,7 +98,7 @@ WHERE t.cert_order = 1
         } // End Task GetAllValidCertificates 
 
 
-        public async System.Threading.Tasks.Task<Certificate> GetLatestValidCertificateForDomain(string domainName)
+        public async System.Threading.Tasks.Task<Certificate?> GetLatestValidCertificateForDomain(string domainName)
         {
             if (string.IsNullOrWhiteSpace(domainName))
             {
@@ -122,7 +122,7 @@ ORDER BY cert_created_at DESC
 LIMIT 1
 ";
 
-                Certificate certificate = null;
+                Certificate? certificate = null;
 
                 using (System.Data.Common.DbConnection connection = this.m_connectionFactory.Connection)
                 {

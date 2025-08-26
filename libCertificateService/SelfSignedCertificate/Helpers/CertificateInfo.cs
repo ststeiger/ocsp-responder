@@ -6,13 +6,13 @@ namespace SelfSignedCertificateGenerator
     public class CertificateInfo
     {
 
-        public string CountryIso2Characters;
-        public string StateOrProvince;
-        public string LocalityOrCity;
-        public string CompanyName;
-        public string Division;
-        public string DomainName;
-        public string EMail;
+        public string CountryIso2Characters = string.Empty;
+        public string StateOrProvince = string.Empty;
+        public string LocalityOrCity = string.Empty;
+        public string CompanyName = string.Empty;
+        public string Division = string.Empty;
+        public string DomainName = string.Empty;
+        public string EMail = string.Empty;
 
         public System.DateTime ValidFrom;
         public System.DateTime ValidTo;
@@ -20,7 +20,8 @@ namespace SelfSignedCertificateGenerator
         // public PrivatePublicPemKeyPair SubjectKeyPair;
         // public PrivatePublicPemKeyPair IssuerKeyPair;
 
-        public System.Collections.Generic.IEnumerable<string> AlternativeNames;
+
+        public System.Collections.Generic.IEnumerable<string> AlternativeNames = new string[0];
 
 
         public System.Collections.Generic.IDictionary<string, Org.BouncyCastle.Asn1.Asn1Encodable> NonCriticalExtensions;
@@ -54,7 +55,9 @@ namespace SelfSignedCertificateGenerator
         } // End Property SubjectAlternativeNames 
 
 
-        public static Org.BouncyCastle.Asn1.DerSequence CreateSubjectAlternativeNames(System.Collections.Generic.IEnumerable<string> names)
+        public static Org.BouncyCastle.Asn1.DerSequence CreateSubjectAlternativeNames(
+            System.Collections.Generic.IEnumerable<string> names
+        )
         {
             System.Collections.Generic.List<Org.BouncyCastle.Asn1.Asn1Encodable> alternativeNames = 
                 new System.Collections.Generic.List<Org.BouncyCastle.Asn1.Asn1Encodable>();
@@ -151,13 +154,13 @@ namespace SelfSignedCertificateGenerator
         } // End Constructor 
 
 
-        public void AddAlternativeNames(System.Collections.Generic.IEnumerable<string> names)
+        public void AddAlternativeNames(params string[] names)
         {
             this.AlternativeNames = names;
         } // End Sub AddAlternativeNames 
 
 
-        public void AddAlternativeNames(params string[] names)
+        public void AddAlternativeNames(System.Collections.Generic.IEnumerable<string> names)
         {
             this.AlternativeNames = names;
         } // End Sub AddAlternativeNames 

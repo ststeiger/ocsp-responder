@@ -1,10 +1,10 @@
 
 namespace ReportServerProxy;
 
-using System.Data.Common;
+
 using System.Linq;
 using Yarp.ReverseProxy.Transforms; // for AddRequestTransform, AddResponseTransform
-using static System.Net.Mime.MediaTypeNames;
+
 
 public class LoggingTransformProvider
     : Yarp.ReverseProxy.Transforms.Builder.ITransformProvider
@@ -83,15 +83,15 @@ public class LoggingTransformProvider
                 
 
                 // Check if the response contains a Location header (indicates a redirect)
-                if (headers.TryGetValues("Location", out var locationValues))
+                if (headers.TryGetValues("Location", out System.Collections.Generic.IEnumerable<string>? locationValues))
                 {
                     // Redirects usually have only one Location header value
-                    string originalLocation = locationValues.FirstOrDefault();
+                    string? originalLocation = locationValues.FirstOrDefault();
 
                     if (!string.IsNullOrEmpty(originalLocation))
                     {
                         // Try to parse the original Location header value as a URI
-                        if (System.Uri.TryCreate(originalLocation, System.UriKind.Absolute, out System.Uri originalUri))
+                        if (System.Uri.TryCreate(originalLocation, System.UriKind.Absolute, out System.Uri? originalUri))
                         {
                             try
                             {
@@ -131,7 +131,7 @@ public class LoggingTransformProvider
                                 }
 
                                 // Add the rewritten Location header to output headers
-                                outputHeaders.Add("Location", newUri.OriginalString);
+                                outputHeaders["Location"] = newUri.OriginalString;
 
                                 // Add debugging to verify this code is running
                                 System.Console.WriteLine($"[REDIRECT] Rewrote Location header from '{originalLocation}' to '{newUri.OriginalString}'");
@@ -154,7 +154,7 @@ public class LoggingTransformProvider
 
                                 string newLocation = "/VIRT_DIR_X" + originalLocation;
                                 // Add the rewritten Location header to output headers
-                                outputHeaders.Add("Location", newLocation);
+                                outputHeaders["Location"] = newLocation;
                             }
 
 

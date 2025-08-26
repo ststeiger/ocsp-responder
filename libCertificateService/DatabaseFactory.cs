@@ -3,7 +3,7 @@ namespace libCertificateService
 {
 
     using Microsoft.Extensions.Configuration;
-
+    
 
     public class ConnectionConfig
     {
@@ -19,13 +19,12 @@ namespace libCertificateService
         private System.Collections.Generic.Dictionary<string, ConnectionConfig?>? m_allConnections;
         private ConnectionConfig? m_defaultConnection;
         private System.Data.Common.DbProviderFactory? m_providerFactory;
-        private readonly Microsoft.Extensions.Configuration.IConfiguration m_configuration;
+        private readonly Microsoft.Extensions.Configuration.IConfiguration? m_configuration;
         private System.IDisposable? m_changeTokenRegistration;
 
 
         public DatabaseFactory(DatabaseOptions options)
-        { 
-        }
+        {  }
 
 
         public DatabaseFactory(
@@ -135,7 +134,9 @@ namespace libCertificateService
             // Only create a new provider factory if the provider name changed
             if (oldProviderName == null || !oldProviderName.Equals(newConfig.ProviderName, System.StringComparison.OrdinalIgnoreCase))
             {
-                this.m_providerFactory = CreateProviderFactory(this.m_defaultConnection.ProviderName);
+                this.m_providerFactory = CreateProviderFactory(
+                    this.m_defaultConnection?.ProviderName
+                );
             }
         } // End Sub LoadConnectionConfigurations 
 
@@ -189,9 +190,12 @@ namespace libCertificateService
         /// Creates the DbProviderFactory based on provider name
         /// </summary>
         private System.Data.Common.DbProviderFactory CreateProviderFactory(
-            string providerName
+            string? providerName
         )
         {
+            if (providerName == null)
+                throw new System.ArgumentNullException(nameof(providerName));
+
             // Try to load the provider factory using the assembly-qualified name
             System.Type? providerFactoryType = System.Type.GetType(providerName);
             return CreateProviderFactory(providerFactoryType);

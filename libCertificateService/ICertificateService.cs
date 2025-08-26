@@ -3,7 +3,7 @@ namespace libCertificateService
 {
     public interface ICertificateRepository
     {
-        System.Threading.Tasks.Task<Certificate> GetLatestValidCertificateForDomain(string domain);
+        System.Threading.Tasks.Task<Certificate?> GetLatestValidCertificateForDomain(string domain);
         System.Threading.Tasks.Task<System.Collections.Generic.List<Certificate>> GetAllValidCertificates();
 
     }

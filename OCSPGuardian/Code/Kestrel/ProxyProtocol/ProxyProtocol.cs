@@ -32,7 +32,7 @@ namespace OCSPGuardian.ProxyProtocol
         public static async System.Threading.Tasks.Task ProcessAsync(
             Microsoft.AspNetCore.Connections.ConnectionContext connectionContext, 
             System.Func<System.Threading.Tasks.Task> next,
-            Microsoft.Extensions.Logging.ILogger logger = null
+            Microsoft.Extensions.Logging.ILogger? logger = null
         )
         {
             System.IO.Pipelines.PipeReader input = connectionContext.Transport.Input;
@@ -117,7 +117,7 @@ namespace OCSPGuardian.ProxyProtocol
             ref System.Buffers.ReadOnlySequence<byte> buffer, 
             byte[] bufferArray, 
             Microsoft.AspNetCore.Connections.ConnectionContext context,
-            Microsoft.Extensions.Logging.ILogger logger = null
+            Microsoft.Extensions.Logging.ILogger? logger = null
         )
         {
             // Probe traffic does not have valid ppv2 data.

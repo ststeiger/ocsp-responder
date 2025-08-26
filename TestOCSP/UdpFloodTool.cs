@@ -46,9 +46,10 @@ namespace TestOCSP
     public class UdpFloodTool
     {
         static int maxThreads;
-        static System.Net.Sockets.Socket rawSocket;
-        static string targetIp;
-        static string payload;
+
+        static System.Net.Sockets.Socket? rawSocket;
+        static string? targetIp;
+        static string? payload;
         static bool keepSending = true;
         static System.Threading.Mutex sendMutex = new System.Threading.Mutex(); // Mutex for potentially shared resources during send (though less critical with packet per thread)
         static System.Threading.CancellationTokenSource cancellationTokenSource = new System.Threading.CancellationTokenSource();

@@ -1,4 +1,6 @@
 
+using SimpleChallengeResponder;
+
 namespace libWebAppBasics
 {
 
@@ -6,33 +8,22 @@ namespace libWebAppBasics
     public class SecretManager
     {
 
-        private static string s_asmName;
-        private static string AssemblyName  
-        { 
-            get
+
+        public static void SetSecret(string secretName, object value)
+        {
+            string? asmName = typeof(SecretManager).Assembly.FullName;
+
+            if (asmName != null)
             {
-                if (s_asmName != null)
-                    return s_asmName;
-                
-                // string asmName = typeof(SecretManager).Assembly.FullName;
-                string asmName = System.Reflection.Assembly.GetEntryAssembly().FullName;
-                
                 int ipos = asmName.IndexOf(',');
                 if (ipos != -1)
                 {
                     asmName = asmName.Substring(0, ipos);
                 } // End if (ipos != -1) 
 
-                s_asmName = asmName;
-                return s_asmName;
-            }
-            
-        }
+            } // End if (asmName != null) 
 
-
-        public static void SetSecret(string secretName, object value)
-        {
-            SetSecret(AssemblyName, secretName, value);
+            SetSecret(asmName!, secretName, value);
         } // End Function SetSecret 
 
 
@@ -42,54 +33,84 @@ namespace libWebAppBasics
                 throw new System.ArgumentNullException("value");
 
             System.Type t = value.GetType();
-            string txtValue = System.Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+            string? txtValue = System.Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
 
-            if (System.Environment.OSVersion.Platform == System.PlatformID.Unix)
+            if (txtValue == null)
+                throw new System.ArgumentNullException(nameof(txtValue));
+
+            if (System.Runtime.InteropServices.RuntimeInformation
+                .IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                string keyPath = System.IO.Path.Combine("Software", "COR");
+                using (Microsoft.Win32.RegistryKey? key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(keyPath, true))
+                {
+                    if (key != null)
+                    {
+                        using (Microsoft.Win32.RegistryKey asmKey = key.CreateSubKey(asmName, true))
+                        {
+                            asmKey.SetValue(secretName, txtValue, Microsoft.Win32.RegistryValueKind.String);
+                        } // End Using asmKey 
+
+                    } // End if (key != null) 
+
+                } // End Using key 
+            }
+            else
             {
                 string path = System.IO.Path.Combine("/etc/", "COR", asmName, secretName);
                 System.IO.File.WriteAllText(path, txtValue, System.Text.Encoding.UTF8);
             }
-            else
-            {
-                string keyPath = System.IO.Path.Combine("Software", "COR");
-                using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(keyPath, true))
-                {
-                    using (Microsoft.Win32.RegistryKey asmKey = key.CreateSubKey(asmName, true))
-                    {
-                        asmKey.SetValue(secretName, txtValue, Microsoft.Win32.RegistryValueKind.String);
-                    } // End Using asmKey 
-
-                } // End Using key 
-            } // End Else 
 
         } // End Function SetSecret 
 
 
         // SecretManager.GetSecret<string>("DefaultDbPassword")
         // SecretManager.GetSecret<string>("GoogleGeoCodingApiKey")
-        public static T GetSecret<T>(string secretName)
+        public static T? GetSecret<T>(string secretName)
         {
-            return GetSecret<T>(secretName, AssemblyName);
+            string? asmName = typeof(SecretManager).Assembly.FullName;
+
+            if (!string.IsNullOrEmpty(asmName))
+            {
+                int ipos = asmName.IndexOf(',');
+                if (ipos != -1)
+                {
+                    asmName = asmName.Substring(0, ipos);
+                } // End if (ipos != -1) 
+            }
+
+            return GetSecret<T>(secretName, asmName);
         } // End Function GetSecret 
-        
-        
-        public static T GetSecret<T>(string secretName, string asmName)
+
+
+        public static T GetSecretOrThrow<T>(string secretName)
         {
-            T obj = default(T);
+            T? secret = GetSecret<T>(secretName);
+
+            if (secret == null)
+                throw new MissingSecretException(secretName);
+
+            return secret;
+        } // End Function GetSecret 
+
+
+        public static T? GetSecret<T>(string secretName, string? asmName)
+        {
+            T? obj = default(T);
 
             if (System.Environment.OSVersion.Platform == System.PlatformID.Unix)
             {
                 obj = SecretManagerHelper.GetEtcKey<T>("/etc/COR/" + asmName, secretName);
-                if(obj == null)
+                if (obj == null)
                     obj = SecretManagerHelper.GetEtcKey<T>(@"/etc/COR/All", secretName);
             }
             else
             {
                 obj = SecretManagerHelper.GetRegistryKey<T>(@"Software\COR\" + asmName, secretName);
-                if(obj == null)
+                if (obj == null)
                     obj = SecretManagerHelper.GetRegistryKey<T>(@"Software\COR\All", secretName);
             }
-            
+
             return obj;
         } // End Function GetSecret 
 
@@ -101,40 +122,46 @@ namespace libWebAppBasics
     {
 
 
-        public static T GetRegistryKey<T>(string key, string value)
+        public static T? GetRegistryKey<T>(string key, string value)
         {
-            object obj = GetRegistryKey(key, value);
+            object? obj = GetRegistryKey(key, value);
             return ObjectToGeneric<T>(obj);
         } // End Function GetRegistryKey 
-        
-        
-        public static T GetEtcKey<T>(string path, string value)
+
+
+        public static T? GetEtcKey<T>(string path, string value)
         {
-            string obj = null;
-            
+            string? obj = null;
+
             string p = System.IO.Path.Combine(path, value);
-            if(System.IO.File.Exists(p))
+            if (System.IO.File.Exists(p))
                 obj = System.IO.File.ReadAllText(p, System.Text.Encoding.Default);
 
-            if(obj == null)
-                return ObjectToGeneric<T>((object)obj);
+            if (obj == null)
+                return ObjectToGeneric<T>((object?)obj);
 
             // || obj.EndsWith(" ") || obj.EndsWith("\t") 
-            while ( obj.EndsWith("\r") || obj.EndsWith("\n") )
+            while (obj.EndsWith("\r") || obj.EndsWith("\n"))
                 obj = obj.Substring(0, obj.Length - 1);
 
             return ObjectToGeneric<T>((object)obj);
         } // End Function GetRegistryKey 
 
 
-        private static object GetRegistryKey(string key, string value)
+        private static object? GetRegistryKey(string key, string value)
         {
-            object objReturnValue = null;
+            object? objReturnValue = null;
+
+            if (!System.Runtime.InteropServices.RuntimeInformation
+                .IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                return objReturnValue;
+
+
             // HKEY_CURRENT_USER
 
             //using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.LocalMachine
-            using (Microsoft.Win32.RegistryKey regKey = Microsoft.Win32.Registry.CurrentUser
-                .OpenSubKey(key))
+            using (Microsoft.Win32.RegistryKey? regKey = Microsoft.Win32.Registry.CurrentUser
+            .OpenSubKey(key))
             {
                 if (regKey != null)
                 {
@@ -145,13 +172,13 @@ namespace libWebAppBasics
 
             return objReturnValue;
         } // End Function GetRegistryKey 
-        
 
-        private static T InlineTypeAssignHelper<T>(object UTO)
+
+        private static T? InlineTypeAssignHelper<T>(object? UTO)
         {
             if (UTO == null)
             {
-                T NullSubstitute = default(T);
+                T? NullSubstitute = default(T);
                 return NullSubstitute;
             } // End if (UTO == null) 
 
@@ -159,14 +186,31 @@ namespace libWebAppBasics
         } // End Template InlineTypeAssignHelper
 
 
-        private static T ObjectToGeneric<T>(object objReturnValue)
+        private static bool TypeCanBeNull<T>()
         {
-            string strReturnValue = null;
+            System.Type type = typeof(T);
+
+            // Reference types (string, object, class, interface, array, delegate, etc.)
+            if (!type.IsValueType)
+                return true;
+
+            // Nullable<T> (value type wrapped in System.Nullable)
+            if (System.Nullable.GetUnderlyingType(type) != null)
+                return true;
+
+            return false;
+        }
+
+        private static T? ObjectToGeneric<T>(object? objReturnValue)
+        {
+            string? strReturnValue = null;
             System.Type tReturnType = typeof(T);
-            
+            bool canBeNull = TypeCanBeNull<T>();
+
+
             if (!object.ReferenceEquals(tReturnType, typeof(System.Byte[])))
             {
-                if(objReturnValue != null)
+                if (objReturnValue != null)
                     strReturnValue = System.Convert.ToString(objReturnValue);
             } // End if (!object.ReferenceEquals(tReturnType, typeof(System.Byte[])))
 
@@ -196,37 +240,87 @@ namespace libWebAppBasics
                 } // End if bool
                 else if (object.ReferenceEquals(tReturnType, typeof(int)))
                 {
-                    int iReturnValue = int.Parse(strReturnValue);
+                    if (string.IsNullOrEmpty(strReturnValue))
+                    {
+                        if (canBeNull)
+                            return InlineTypeAssignHelper<T>(null);
+                        else
+                            throw new System.NullReferenceException(nameof(strReturnValue));
+                    }
+
+                    int iReturnValue = int.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(iReturnValue);
                 } // End if int
                 else if (object.ReferenceEquals(tReturnType, typeof(uint)))
                 {
-                    uint uiReturnValue = uint.Parse(strReturnValue);
+                    if (string.IsNullOrEmpty(strReturnValue))
+                    {
+                        if (canBeNull)
+                            return InlineTypeAssignHelper<T>(null);
+                        else
+                            throw new System.NullReferenceException(nameof(strReturnValue));
+                    }
+
+                    uint uiReturnValue = uint.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(uiReturnValue);
                 } // End if uint
                 else if (object.ReferenceEquals(tReturnType, typeof(long)))
                 {
-                    long lngReturnValue = long.Parse(strReturnValue);
+                    if (string.IsNullOrEmpty(strReturnValue))
+                    {
+                        if (canBeNull)
+                            return InlineTypeAssignHelper<T>(null);
+                        else
+                            throw new System.NullReferenceException(nameof(strReturnValue));
+                    }
+
+                    long lngReturnValue = long.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(lngReturnValue);
                 } // End if long
                 else if (object.ReferenceEquals(tReturnType, typeof(ulong)))
                 {
-                    ulong ulngReturnValue = ulong.Parse(strReturnValue);
+                    if (string.IsNullOrEmpty(strReturnValue))
+                    {
+                        if (canBeNull)
+                            return InlineTypeAssignHelper<T>(null);
+                        else
+                            throw new System.NullReferenceException(nameof(strReturnValue));
+                    }
+
+
+                    ulong ulngReturnValue = ulong.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(ulngReturnValue);
                 } // End if ulong
                 else if (object.ReferenceEquals(tReturnType, typeof(float)))
                 {
-                    float fltReturnValue = float.Parse(strReturnValue);
+                    if (string.IsNullOrEmpty(strReturnValue))
+                    {
+                        if (canBeNull)
+                            return InlineTypeAssignHelper<T>(null);
+                        else
+                            throw new System.NullReferenceException(nameof(strReturnValue));
+                    }
+
+
+                    float fltReturnValue = float.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(fltReturnValue);
                 }
                 else if (object.ReferenceEquals(tReturnType, typeof(double)))
                 {
-                    double dblReturnValue = double.Parse(strReturnValue);
+                    if (string.IsNullOrEmpty(strReturnValue))
+                    {
+                        if (canBeNull)
+                            return InlineTypeAssignHelper<T>(null);
+                        else
+                            throw new System.NullReferenceException(nameof(strReturnValue));
+                    }
+
+                    double dblReturnValue = double.Parse(strReturnValue, System.Globalization.CultureInfo.InvariantCulture);
                     return InlineTypeAssignHelper<T>(dblReturnValue);
                 }
                 else if (object.ReferenceEquals(tReturnType, typeof(System.Net.IPAddress)))
                 {
-                    System.Net.IPAddress ipaAddress = null;
+                    System.Net.IPAddress? ipaAddress = null;
 
                     if (string.IsNullOrEmpty(strReturnValue))
                         return InlineTypeAssignHelper<T>(ipaAddress);
@@ -271,7 +365,7 @@ namespace libWebAppBasics
                 System.Console.WriteLine(ex.Message);
                 throw;
             } // End Catch
-            
+
         } // End Function ObjectToGeneric 
 
 

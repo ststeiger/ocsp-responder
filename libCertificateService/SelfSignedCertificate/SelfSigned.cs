@@ -11,7 +11,9 @@ namespace SimpleChallengeResponder
     {
 
 
-        public static System.Collections.Generic.List<string> GetAlternativeNames(string[] otherDomains)
+        public static System.Collections.Generic.List<string> GetAlternativeNames(
+            params string[] otherDomains
+        )
         {
             // http://localhost
             // http://machine-name
@@ -83,7 +85,7 @@ namespace SimpleChallengeResponder
         } // End Function GetAlternativeNames 
 
 
-        public static  System.Collections.Generic.List<string> GetAlternativeNames()
+        public static System.Collections.Generic.List<string> GetAlternativeNames()
         {
             return GetAlternativeNames(new string[0]);
         } // End Function GetAlternativeNames 
@@ -94,8 +96,8 @@ namespace SimpleChallengeResponder
             string password
         )
         {
-            string pemKey = SecretManager.GetSecret<string>("skynet_key");
-            string pemCert = SecretManager.GetSecret<string>("skynet_cert");
+            string pemKey = SecretManager.GetSecretOrThrow<string>("skynet_key");
+            string pemCert = SecretManager.GetSecretOrThrow<string>("skynet_cert");
 
             Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair rootKey = ReadAsymmetricKeyParameter(pemKey);
             Org.BouncyCastle.X509.X509Certificate rootCert = PemStringToX509(pemCert);
@@ -135,7 +137,7 @@ namespace SimpleChallengeResponder
             , System.Collections.Generic.IEnumerable<string> alternativeNames 
         ) 
         {
-            Org.BouncyCastle.X509.X509Certificate caSsl = null;
+            Org.BouncyCastle.X509.X509Certificate caSsl;
 
             string countryIso2Characters = "GA";
             string stateOrProvince = "Aremorica";
@@ -180,7 +182,7 @@ namespace SimpleChallengeResponder
             , Org.BouncyCastle.Crypto.AsymmetricKeyParameter privateKey
             , string password = "")
         {
-            byte[] pfxBytes = null;
+            byte[]? pfxBytes = null;
 
             // create certificate entry
             Org.BouncyCastle.Pkcs.X509CertificateEntry certEntry =
@@ -224,7 +226,7 @@ namespace SimpleChallengeResponder
 
         private static Org.BouncyCastle.X509.X509Certificate PemStringToX509(string pemString)
         {
-            Org.BouncyCastle.X509.X509Certificate cert = null;
+            Org.BouncyCastle.X509.X509Certificate cert;
             Org.BouncyCastle.X509.X509CertificateParser kpp = new Org.BouncyCastle.X509.X509CertificateParser();
 
             using (System.IO.Stream pemStream = new StringStream(pemString))
@@ -246,7 +248,7 @@ namespace SimpleChallengeResponder
 
         private static Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair ReadAsymmetricKeyParameter(string pemString)
         {
-            Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair para = null;
+            Org.BouncyCastle.Crypto.AsymmetricCipherKeyPair para;
 
             using (System.IO.TextReader tr = new System.IO.StringReader(pemString))
             {

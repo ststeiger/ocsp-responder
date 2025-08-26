@@ -1,11 +1,11 @@
 ﻿
-using System;
-
 namespace SelfSignedCertificateGenerator
 {
 
+    using System; // for buffer.CopyTo, AsSpan 
 
-    public abstract class NonBackdooredPrng 
+
+    public abstract class NonBackdooredPrng
         : Org.BouncyCastle.Crypto.Prng.IRandomGenerator
     {
         public abstract void AddSeedMaterial(byte[] seed);
@@ -39,18 +39,18 @@ namespace SelfSignedCertificateGenerator
                 return new Org.BouncyCastle.Security.SecureRandom(
                     NonBackdooredPrng.Create()
                 );
-            }
-        }
+            } // End Getter 
+        } // End Property SecureRandom 
 
 
     } // End Class NonBackdooredPrng 
 
 
 
-    public class WindowsPrng 
+    public class WindowsPrng
         : NonBackdooredPrng
     {
-        protected Org.BouncyCastle.Crypto.Prng.IRandomGenerator m_rnd;
+        protected readonly Org.BouncyCastle.Crypto.Prng.IRandomGenerator m_rnd;
 
         public WindowsPrng()
         {
@@ -58,8 +58,9 @@ namespace SelfSignedCertificateGenerator
 
             const string digestName = "SHA256";
             Org.BouncyCastle.Crypto.IDigest digest = Org.BouncyCastle.Security.DigestUtilities.GetDigest(digestName);
+
             if (digest == null)
-                return;
+                throw new System.InvalidOperationException($"Digest '{digestName}' not available.");
 
             Org.BouncyCastle.Crypto.Prng.DigestRandomGenerator prng =
                 new Org.BouncyCastle.Crypto.Prng.DigestRandomGenerator(digest);
@@ -72,7 +73,7 @@ namespace SelfSignedCertificateGenerator
             }
 
             this.m_rnd = prng;
-        }
+        } // End Constructor 
 
 
         /// <summary>Add more seed material to the generator.</summary>
@@ -85,10 +86,14 @@ namespace SelfSignedCertificateGenerator
 
         public override void AddSeedMaterial(System.ReadOnlySpan<byte> seed)
         {
+#if NETSTANDARD2_0_OR_GREATER
             byte[] buffer = seed.ToArray(); // Allocates on the heap
             this.m_rnd.AddSeedMaterial(buffer);
+#else
+            this.m_rnd.AddSeedMaterial(seed);
+#endif
         } // End Sub AddSeedMaterial 
-        
+
 
 
         /// <summary>Add more seed material to the generator.</summary>
@@ -106,12 +111,15 @@ namespace SelfSignedCertificateGenerator
             this.m_rnd.NextBytes(bytes);
         } // End Sub NextBytes 
 
-
         public override void NextBytes(System.Span<byte> bytes)
         {
+#if NETSTANDARD2_0_OR_GREATER
             byte[] buffer = new byte[bytes.Length];
             this.m_rnd.NextBytes(buffer);
             buffer.CopyTo(bytes); // Copies from heap to span
+#else
+            this.m_rnd.NextBytes(bytes);
+#endif 
         } // End Sub NextBytes 
 
 
@@ -128,7 +136,7 @@ namespace SelfSignedCertificateGenerator
     } // End Class WindowsPrng
 
 
-    public class PosixPrng 
+    public class PosixPrng
         : NonBackdooredPrng
     {
         // Early boot on a very low entropy device. 
@@ -147,12 +155,20 @@ namespace SelfSignedCertificateGenerator
         public override void AddSeedMaterial(byte[] seed)
         {
             // throw new System.NotImplementedException();
+            // Since your PosixPrng pulls randomness from /dev/urandom,
+            // the concept of "adding seed material" is meaningless
+            // in the sense of actually influencing the kernel PRNG.
+            // The Linux kernel does not accept entropy injected into /dev/urandom from userland.
         } // End Sub AddSeedMaterial 
 
         public override void AddSeedMaterial(System.ReadOnlySpan<byte> seed)
         {
             // throw new System.NotImplementedException();
-        }
+            // Since your PosixPrng pulls randomness from /dev/urandom,
+            // the concept of "adding seed material" is meaningless
+            // in the sense of actually influencing the kernel PRNG.
+            // The Linux kernel does not accept entropy injected into /dev/urandom from userland.
+        } // End Sub AddSeedMaterial 
 
 
         /// <summary>Add more seed material to the generator.</summary>
@@ -160,6 +176,10 @@ namespace SelfSignedCertificateGenerator
         public override void AddSeedMaterial(long seed)
         {
             // throw new System.NotImplementedException();
+            // Since your PosixPrng pulls randomness from /dev/urandom,
+            // the concept of "adding seed material" is meaningless
+            // in the sense of actually influencing the kernel PRNG.
+            // The Linux kernel does not accept entropy injected into /dev/urandom from userland.
         } // End Sub AddSeedMaterial 
 
 
@@ -169,39 +189,87 @@ namespace SelfSignedCertificateGenerator
         {
             using (System.IO.FileStream fs =
                 new System.IO.FileStream(
-                  "/dev/urandom"
-                , System.IO.FileMode.Open
-                , System.IO.FileAccess.Read))
+                    "/dev/urandom"
+                  , System.IO.FileMode.Open
+                  , System.IO.FileAccess.Read
+                  , System.IO.FileShare.Read
+                  , bufferSize: 4096
+                  , useAsync: false))
             {
-                fs.Read(bytes, 0, bytes.Length);
-            }
+                int totalRead = 0;
+                while (totalRead < bytes.Length)
+                {
+                    int read = fs.Read(bytes, totalRead, bytes.Length - totalRead);
+                    if (read <= 0)
+                    {
+                        throw new System.IO.EndOfStreamException(
+                            $"Could not read the required {bytes.Length} bytes from /dev/urandom. Only got {totalRead}.");
+                    }
+
+                    totalRead += read;
+                } // Whend 
+
+            } // End Using fs 
 
         } // End Sub NextBytes 
 
 
         public override void NextBytes(System.Span<byte> bytes)
         {
-            byte[] temp = System.Buffers.ArrayPool<byte>.Shared.Rent(bytes.Length);
-            try
-            {
-                using (System.IO.FileStream fs = new System.IO.FileStream(
-                      "/dev/urandom", 
-                      System.IO.FileMode.Open, 
-                      System.IO.FileAccess.Read)
-                )
-                {
-                    int read = fs.Read(temp, 0, bytes.Length);
-                    if (read != bytes.Length)
-                        throw new System.IO.EndOfStreamException($"Expected {bytes.Length} bytes, got {read} bytes.");
-                }
 
-                temp.AsSpan(0, bytes.Length).CopyTo(bytes);
-            }
-            finally
+#if NETSTANDARD2_0_OR_GREATER
+
+            using (System.IO.FileStream fs = new System.IO.FileStream(
+                "/dev/urandom",
+                System.IO.FileMode.Open,
+                System.IO.FileAccess.Read,
+                System.IO.FileShare.Read,
+                bufferSize: 4096,
+                useAsync: false)
+            )
             {
-                System.Buffers.ArrayPool<byte>.Shared.Return(temp);
+                int totalRead = 0;
+                byte[] temp = new byte[4096]; // temporary buffer
+                while (totalRead < bytes.Length)
+                {
+                    int toRead = System.Math.Min(temp.Length, bytes.Length - totalRead);
+                    int read = fs.Read(temp, 0, toRead);
+                    if (read <= 0)
+                    {
+                        throw new System.IO.EndOfStreamException(
+                            $"Could not read the required {bytes.Length} bytes from /dev/urandom. Only got {totalRead}.");
+                    }
+                    temp.AsSpan(0, read).CopyTo(bytes.Slice(totalRead));
+                    totalRead += read;
+                }
             }
-        }
+
+#else
+
+            using (System.IO.FileStream fs =
+                new System.IO.FileStream(
+                    "/dev/urandom"
+                  , System.IO.FileMode.Open
+                  , System.IO.FileAccess.Read
+                  , System.IO.FileShare.Read
+                  , bufferSize: 4096
+                  , useAsync: false))
+            {
+                int totalRead = 0;
+                while (totalRead < bytes.Length)
+                {
+                    int read = fs.Read(bytes.Slice(totalRead));
+                    if (read <= 0)
+                    {
+                        throw new System.IO.EndOfStreamException(
+                            $"Could not read the required {bytes.Length} bytes from /dev/urandom. Only got {totalRead}.");
+                    }
+                    totalRead += read;
+                } // Whend
+
+            } // End Using fs 
+#endif 
+        } // End Sub NextBytes
 
 
         /// <summary>Fill byte array with random values.</summary>
@@ -210,19 +278,33 @@ namespace SelfSignedCertificateGenerator
         /// <param name="len">Length of segment to fill.</param>
         public override void NextBytes(byte[] bytes, int start, int len)
         {
+
             using (System.IO.FileStream fs =
                 new System.IO.FileStream(
-                  "/dev/urandom"
-                , System.IO.FileMode.Open
-                , System.IO.FileAccess.Read))
+                    "/dev/urandom"
+                  , System.IO.FileMode.Open
+                  , System.IO.FileAccess.Read
+                  , System.IO.FileShare.Read
+                  , bufferSize: 4096
+                  , useAsync: false))
             {
-                fs.Read(bytes, start, len);
-            }
+                int totalRead = 0;
+                while (totalRead < len)
+                {
+                    int read = fs.Read(bytes, start + totalRead, len - totalRead);
+                    if (read <= 0)
+                    {
+                        throw new System.IO.EndOfStreamException(
+                            $"Could not read the required {len} bytes from /dev/urandom. Only got {totalRead}.");
+                    }
+                    totalRead += read;
+                } // Whend 
 
-        } // End Sub NextBytes 
+            } // End Using fs 
+        } // End Sub NextBytes
 
 
     } // End Class LinuxPrng 
 
 
-} // End Namespace CoreCMS.JWT 
+} // End Namespace 

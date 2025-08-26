@@ -8,12 +8,13 @@ namespace SelfSignedCertificateGenerator
 
 
         public static Org.BouncyCastle.Crypto.ISignatureFactory CreateSignatureFactory(
-            Org.BouncyCastle.Crypto.AsymmetricKeyParameter privateKey)
+            Org.BouncyCastle.Crypto.AsymmetricKeyParameter privateKey
+        )
         {
             // https://github.com/bcgit/bc-csharp/blob/master/crypto/src/crypto/operators/Asn1Signature.cs
             // https://github.com/kerryjiang/BouncyCastle.Crypto/blob/master/Crypto/x509/X509Utilities.cs
-            Org.BouncyCastle.Crypto.ISignatureFactory signatureFactory = null;
-            
+            Org.BouncyCastle.Crypto.ISignatureFactory? signatureFactory = null;
+
             if (privateKey is Org.BouncyCastle.Crypto.Parameters.ECPrivateKeyParameters)
             {
 #if false
@@ -59,13 +60,22 @@ namespace SelfSignedCertificateGenerator
                     , privateKey
                 );
             }
+            else
+            {
+                throw new System.NotSupportedException(nameof(privateKey));
+            }
+
+            if (signatureFactory == null)
+                throw new System.NotSupportedException(nameof(signatureFactory));
 
             return signatureFactory;
         } // End Function CreateSignatureFactory 
 
 
-        public static void AddExtensions(Org.BouncyCastle.X509.X509V3CertificateGenerator certificateGenerator
-            , CertificateInfo certificateInfo)
+        public static void AddExtensions(
+            Org.BouncyCastle.X509.X509V3CertificateGenerator certificateGenerator, 
+            CertificateInfo certificateInfo
+        )
         {
             foreach (System.Collections.Generic.KeyValuePair<string, Org.BouncyCastle.Asn1.Asn1Encodable> 
                 kvp in certificateInfo.CriticalExtensions)
@@ -114,7 +124,7 @@ namespace SelfSignedCertificateGenerator
             // certificateGenerator.SetSerialNumber(serialNumber);
 
             // Get the current date and time (for calculating seconds since 00:00:00 of that day)
-            string serialNumberString = System.DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
+            string serialNumberString = System.DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", System.Globalization.CultureInfo.InvariantCulture);
             Org.BouncyCastle.Math.BigInteger serialNumber = new Org.BouncyCastle.Math.BigInteger(serialNumberString);
             certificateGenerator.SetSerialNumber(serialNumber);
 
@@ -122,9 +132,10 @@ namespace SelfSignedCertificateGenerator
             certificateGenerator.SetNotBefore(certificateInfo1.ValidFrom);
             certificateGenerator.SetNotAfter(certificateInfo1.ValidTo);
 
-            certificateGenerator.AddExtension(Org.BouncyCastle.Asn1.X509.X509Extensions.SubjectAlternativeName.Id
-                , false
-                , certificateInfo1.SubjectAlternativeNames
+            certificateGenerator.AddExtension(
+                Org.BouncyCastle.Asn1.X509.X509Extensions.SubjectAlternativeName.Id, 
+                false, 
+                certificateInfo1.SubjectAlternativeNames
             );
 
 
@@ -133,10 +144,13 @@ namespace SelfSignedCertificateGenerator
 
 
 
-            Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier subjectKeyIdentifierExtension =
-                new Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier(
-                Org.BouncyCastle.X509.SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(subjectPublicKey)
-            );
+            // Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier subjectKeyIdentifierExtension =
+            //    new Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier(
+            //    Org.BouncyCastle.X509.SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(subjectPublicKey)
+            // );
+
+            Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier subjectKeyIdentifierExtension = Org.BouncyCastle.X509.Extension
+                .X509ExtensionUtilities.CreateSubjectKeyIdentifier(subjectPublicKey);
 
             certificateGenerator.AddExtension(
                   Org.BouncyCastle.Asn1.X509.X509Extensions.SubjectKeyIdentifier.Id
@@ -145,9 +159,28 @@ namespace SelfSignedCertificateGenerator
             );
 
 
-            certificateGenerator.AddExtension(Org.BouncyCastle.Asn1.X509.X509Extensions.ExtendedKeyUsage.Id, false,
-                new Org.BouncyCastle.Asn1.X509.ExtendedKeyUsage(Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPServerAuth)
+            // certificateGenerator.AddExtension(
+            //    Org.BouncyCastle.Asn1.X509.X509Extensions.ExtendedKeyUsage.Id, 
+            //    false,
+            //    new Org.BouncyCastle.Asn1.X509.ExtendedKeyUsage(
+            //        Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPServerAuth
+            //    )
+            // );
+
+            certificateGenerator.AddExtension(
+                Org.BouncyCastle.Asn1.X509.X509Extensions.ExtendedKeyUsage.Id,
+                false,
+                new Org.BouncyCastle.Asn1.X509.ExtendedKeyUsage(
+                    new Org.BouncyCastle.Asn1.DerObjectIdentifier[]
+                    {
+                        Org.BouncyCastle.Asn1.X509.KeyPurposeID.id_kp_serverAuth,
+                        // is it correct to add client auth here as well ?
+                        // it was not initially 
+                        Org.BouncyCastle.Asn1.X509.KeyPurposeID.id_kp_clientAuth
+                    }
+                )
             );
+
 
 
             if (!string.IsNullOrEmpty(ocspUrl))
@@ -206,7 +239,10 @@ namespace SelfSignedCertificateGenerator
 
             AddExtensions(certificateGenerator, certificateInfo1);
 
-            Org.BouncyCastle.Crypto.ISignatureFactory signatureFactory = CreateSignatureFactory(issuerPrivateKey);
+            Org.BouncyCastle.Crypto.ISignatureFactory signatureFactory = CreateSignatureFactory(
+                issuerPrivateKey
+            );
+
             return certificateGenerator.Generate(signatureFactory);
         } // End Function GenerateSslCertificate 
 
@@ -254,20 +290,27 @@ namespace SelfSignedCertificateGenerator
             
 
             AddExtensions(certificateGenerator, certificateInfo);
-            Org.BouncyCastle.Crypto.ISignatureFactory signatureFactory = CreateSignatureFactory(privateKey);
+            Org.BouncyCastle.Crypto.ISignatureFactory signatureFactory = CreateSignatureFactory(
+                privateKey
+            );
 
 
             certificateGenerator.SetPublicKey(publicKey);
 
 
-            // Serial Number
-            Org.BouncyCastle.Math.BigInteger serialNumber =
-                Org.BouncyCastle.Utilities.BigIntegers.CreateRandomInRange(
-                      Org.BouncyCastle.Math.BigInteger.One
-                    , Org.BouncyCastle.Math.BigInteger.ValueOf(long.MaxValue)
-                    , secureRandom
-            );
+            // Serial Number 
+            // Org.BouncyCastle.Math.BigInteger serialNumber = 
+            //    Org.BouncyCastle.Utilities.BigIntegers.CreateRandomInRange( 
+            //        Org.BouncyCastle.Math.BigInteger.One, 
+            //        Org.BouncyCastle.Math.BigInteger.ValueOf(long.MaxValue), 
+            //        secureRandom 
+            // ); 
 
+            // certificateGenerator.SetSerialNumber(serialNumber);
+
+
+            string serialNumberString = System.DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", System.Globalization.CultureInfo.InvariantCulture);
+            Org.BouncyCastle.Math.BigInteger serialNumber = new Org.BouncyCastle.Math.BigInteger(serialNumberString);
             certificateGenerator.SetSerialNumber(serialNumber);
 
 
@@ -285,23 +328,25 @@ namespace SelfSignedCertificateGenerator
 
 
 
-            Org.BouncyCastle.Asn1.X509.AuthorityKeyIdentifier authorityKeyIdentifierExtension =
-                new Org.BouncyCastle.Asn1.X509.AuthorityKeyIdentifier(
-                Org.BouncyCastle.X509.SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey)
-            );
+            // Org.BouncyCastle.Asn1.X509.AuthorityKeyIdentifier authorityKeyIdentifierExtension =
+            //    new Org.BouncyCastle.Asn1.X509.AuthorityKeyIdentifier(
+            //    Org.BouncyCastle.X509.SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey)
+            // );
+
+            Org.BouncyCastle.Asn1.X509.AuthorityKeyIdentifier authorityKeyIdentifierExtension = Org.BouncyCastle.X509.Extension
+                .X509ExtensionUtilities
+                .CreateAuthorityKeyIdentifier(publicKey)
+            ;
 
 
+            // Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier subjectKeyIdentifierExtension =
+            //    new Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier(
+            //    Org.BouncyCastle.X509.SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey)
+            // );
 
-            Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier subjectKeyIdentifierExtension =
-                new Org.BouncyCastle.Asn1.X509.SubjectKeyIdentifier(
-                Org.BouncyCastle.X509.SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey)
-            );
-
-            certificateGenerator.AddExtension(
-                  Org.BouncyCastle.Asn1.X509.X509Extensions.SubjectKeyIdentifier.Id
-                , false
-                , subjectKeyIdentifierExtension
-            );
+            Org.BouncyCastle.Asn1.X509.SubjectPublicKeyInfo subjectKeyIdentifierExtension = Org.BouncyCastle.X509
+                .SubjectPublicKeyInfoFactory
+                .CreateSubjectPublicKeyInfo(publicKey);
 
             certificateGenerator.AddExtension(
                  Org.BouncyCastle.Asn1.X509.X509Extensions.AuthorityKeyIdentifier.Id
@@ -313,29 +358,52 @@ namespace SelfSignedCertificateGenerator
 
 
             // Set certificate intended purposes to only Server Authentication
-            //certificateGenerator.AddExtension(Org.BouncyCastle.Asn1.X509.X509Extensions.ExtendedKeyUsage.Id
-            //    , true 
-            //    , new Org.BouncyCastle.Asn1.X509.ExtendedKeyUsage(Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPServerAuth)
-            //);
+            // certificateGenerator.AddExtension(
+            //     Org.BouncyCastle.Asn1.X509.X509Extensions.ExtendedKeyUsage.Id, 
+            //     true, 
+            //     new Org.BouncyCastle.Asn1.X509.ExtendedKeyUsage(
+            //         Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPServerAuth
+            //     )
+            // );
 
 
-            certificateGenerator.AddExtension(Org.BouncyCastle.Asn1.X509.X509Extensions.ExtendedKeyUsage.Id, true
-                , new Org.BouncyCastle.Asn1.X509.ExtendedKeyUsage(new[] {
-                      Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPClientAuth,
-                      Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPServerAuth
+            // certificateGenerator.AddExtension( 
+            //     Org.BouncyCastle.Asn1.X509.X509Extensions.ExtendedKeyUsage.Id, 
+            //     true, 
+            //     new Org.BouncyCastle.Asn1.X509.ExtendedKeyUsage(
+            //          new Org.BouncyCastle.Asn1.X509.KeyPurposeID[] {
+            //              Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPClientAuth, 
+            //              Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPServerAuth 
+            //          }
+            //     )
+            // );
+
+
+            certificateGenerator.AddExtension(
+                Org.BouncyCastle.Asn1.X509.X509Extensions.ExtendedKeyUsage,
+                true,
+                new Org.BouncyCastle.Asn1.X509.ExtendedKeyUsage(
+                    new Org.BouncyCastle.Asn1.X509.KeyPurposeID[] {
+                        // Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPClientAuth,
+                        Org.BouncyCastle.Asn1.X509.KeyPurposeID.id_kp_clientAuth,
+                        // Org.BouncyCastle.Asn1.X509.KeyPurposeID.IdKPServerAuth
+                        Org.BouncyCastle.Asn1.X509.KeyPurposeID.id_kp_serverAuth
                 })
             );
 
 
             // Only if we generate a root-Certificate 
-            certificateGenerator.AddExtension(Org.BouncyCastle.Asn1.X509.X509Extensions.BasicConstraints.Id
-                , true
-                , new Org.BouncyCastle.Asn1.X509.BasicConstraints(true)
+            certificateGenerator.AddExtension(
+                Org.BouncyCastle.Asn1.X509.X509Extensions.BasicConstraints.Id, 
+                true, 
+                new Org.BouncyCastle.Asn1.X509.BasicConstraints(true)
             );
 
             return certificateGenerator.Generate(signatureFactory);
         } // End Function GenerateRootCertificate 
 
 
-    }
-}
+    } // End Class CerGenerator 
+
+
+} // End Namespace 

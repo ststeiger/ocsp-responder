@@ -5,22 +5,22 @@ namespace libWebAppBasics
 
     public class PseudoUrl
     {
-        public string RawUrl;
+        public string? RawUrl;
 
-        public string Scheme;
-        public string Host;
-        public int Port;
+        public string? Scheme;
+        public string? Host;
+        public int? Port;
 
-        public string Hash;
-        public string QueryString;
-        public string Path;
+        public string? Hash;
+        public string? QueryString;
+        public string? Path;
 
 
         public string Authority
         {
             get
             {
-                return Host + ":" + Port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                return this.Host + ":" + this.Port?.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
         }
 
@@ -35,20 +35,20 @@ namespace libWebAppBasics
         }
 
 
-        public static PseudoUrl Parse(string url)
+        public static PseudoUrl? Parse(string url)
         {
-            PseudoUrl pseudoUrl = new PseudoUrl();
+            PseudoUrl? pseudoUrl = new PseudoUrl();
             return Parse(pseudoUrl, url);
         }
 
 
-        public static implicit operator PseudoUrl(string url)
+        public static implicit operator PseudoUrl?(string url)
         {
             return Parse(url);
-        }
+        } // End implicit(string) 
 
 
-        public static PseudoUrl Parse(PseudoUrl pseudoUrl, string url)
+        public static PseudoUrl? Parse(PseudoUrl pseudoUrl, string url)
         {
             //url = "https://foobar.com:8080/hello/kitty.aspx?noob=ish#foobar2000";
             //url = "https://*.com:8080/hello/kitty.aspx?noob=ish#foobar2000";
@@ -117,7 +117,7 @@ namespace libWebAppBasics
             }
 
             return pseudoUrl;
-        }
+        } // End Function Parse 
 
 
     } // End Class PseudoUrl 

@@ -19,12 +19,13 @@ namespace OCSPGuardian.Pages
 
         public ProxyProtocol.IProxyProtocolFeature? ProxyProtocolFeature { get; set; }
         public bool ShowProxyInfo { get; set; } = false;
-        public string ClientIP { get; set; }
-        public string ClientIpForwarded { get; set; }
+        public string? ClientIP { get; set; }
+        public string? ClientIpForwarded { get; set; }
 
 
 
-        public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync()
+        // public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync()
+        public Microsoft.AspNetCore.Mvc.IActionResult OnGet()
         {
             foreach (System.Collections.Generic.KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues> header in Request.Headers)
             {
@@ -48,16 +49,27 @@ namespace OCSPGuardian.Pages
             } // End if (WITH_INSECURE_DATA) 
 
 
-            ProxyProtocolFeature = HttpContext.Features.Get<ProxyProtocol.IProxyProtocolFeature>(); 
+            ProxyProtocolFeature = HttpContext.Features.Get<ProxyProtocol.IProxyProtocolFeature>();
 
-            System.Net.IPAddress ip = this.Request.HttpContext.Connection.RemoteIpAddress.IsIPv4MappedToIPv6 ?
-                this.Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4() : this.Request.HttpContext.Connection.RemoteIpAddress;
+            System.Net.IPAddress? ip = null;
+            if (this.Request.HttpContext.Connection.RemoteIpAddress != null)
+            { 
+                ip = this.Request.HttpContext.Connection.RemoteIpAddress.IsIPv4MappedToIPv6 
+                    ? this.Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4() 
+                    : this.Request.HttpContext.Connection.RemoteIpAddress;
+            }
 
-            this.ClientIP = ip.ToString();
+            this.ClientIP = ip?.ToString();
             this.ClientIpForwarded = this.Request.HttpContext.Request.Headers["X-Forwarded-For"].ToString() ?? "EMPTY" ;
 
+            // return await System.Threading.Tasks.Task.Run(() =>
+            // {
+            //    // ... same code as OnGet ...
+            //    return Page();
+            // });
+
             return Page();
-        } // End Task OnGetAsync 
+        } // End Task OnGet
 
 
         public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> OnPostAsync()
@@ -97,10 +109,16 @@ namespace OCSPGuardian.Pages
 
             ProxyProtocolFeature = HttpContext.Features.Get<ProxyProtocol.IProxyProtocolFeature>();
 
-            System.Net.IPAddress ip = this.Request.HttpContext.Connection.RemoteIpAddress.IsIPv4MappedToIPv6 ?
-                this.Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4() : this.Request.HttpContext.Connection.RemoteIpAddress;
+            System.Net.IPAddress? ip = null;
+            if (this.Request.HttpContext.Connection.RemoteIpAddress != null)
+            {
+                ip = this.Request.HttpContext.Connection.RemoteIpAddress.IsIPv4MappedToIPv6 ? 
+                    this.Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4()
+                    : this.Request.HttpContext.Connection.RemoteIpAddress
+                ;
+            }
 
-            this.ClientIP = ip.ToString();
+            this.ClientIP = ip?.ToString();
             this.ClientIpForwarded = this.Request.HttpContext.Request.Headers["X-Forwarded-For"].ToString(); ;
 
             return Page();

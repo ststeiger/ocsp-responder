@@ -10,18 +10,22 @@ namespace OCSPGuardian
 
 
         public bool UseLetsEncrypt;
-        public string Domain;
-        public string Token;
-        public string SignedNonce;
-        public string PfxPassword;
+        public string? Domain;
+        public string? Token;
+        public string? SignedNonce;
+        public string? PfxPassword;
 
 
         protected bool m_isNotWindows;
-        protected System.Security.Cryptography.X509Certificates.X509Certificate2 m_certificate;
-        protected byte[] m_bkcs12Bytes;
+        protected System.Security.Cryptography.X509Certificates.X509Certificate2? m_certificate;
+        protected byte[]? m_bkcs12Bytes;
 
 
-        public LetsEncryptData(string password, string domain, bool useLetsEncrypt)
+        public LetsEncryptData(
+            string password, 
+            string domain, 
+            bool useLetsEncrypt
+        )
         {
             this.Domain = domain.ToLowerInvariant();
             this.UseLetsEncrypt = useLetsEncrypt;
@@ -30,7 +34,10 @@ namespace OCSPGuardian
         } // End Constructor 
 
 
-        public LetsEncryptData(string domain, bool useLetsEncrypt)
+        public LetsEncryptData(
+            string domain, 
+            bool useLetsEncrypt
+        )
             : this(DEFAULT_PASSWORD, domain, useLetsEncrypt)
         { }
 
@@ -50,12 +57,12 @@ namespace OCSPGuardian
             get
             {
                 if (this.m_isNotWindows)
-                    return this.m_certificate;
+                    return this.m_certificate!;
 
                 // Hack for 2017 Windoze Bug "No credentials are available in the security package" 
                 // SslStream is not working with ephemeral keys ... 
                 System.Security.Cryptography.X509Certificates.X509Certificate2 cert =
-                    new System.Security.Cryptography.X509Certificates.X509Certificate2(this.m_bkcs12Bytes, this.PfxPassword);
+                    new System.Security.Cryptography.X509Certificates.X509Certificate2(this.m_bkcs12Bytes!, this.PfxPassword);
                 return cert;
             }
 
@@ -76,7 +83,9 @@ namespace OCSPGuardian
             System.ReadOnlySpan<char> private_key = System.MemoryExtensions.AsSpan(key);
 
             System.Security.Cryptography.X509Certificates.X509Certificate2 sslCert =
-                System.Security.Cryptography.X509Certificates.X509Certificate2.CreateFromPem(cert_pem, private_key);
+                System.Security.Cryptography.X509Certificates
+                .X509Certificate2.CreateFromPem(cert_pem, private_key)
+            ;
 
             this.Certificate = sslCert;
 
@@ -89,7 +98,12 @@ namespace OCSPGuardian
             this.PfxPassword = password;
 
             System.Security.Cryptography.X509Certificates.X509Certificate2 sslCert =
-                new System.Security.Cryptography.X509Certificates.X509Certificate2(pfx, password, System.Security.Cryptography.X509Certificates.X509KeyStorageFlags.Exportable);
+                new System.Security.Cryptography.X509Certificates.X509Certificate2(
+                    pfx, 
+                    password, 
+                    System.Security.Cryptography.X509Certificates
+                    .X509KeyStorageFlags.Exportable
+            );
 
             this.Certificate = sslCert;
 

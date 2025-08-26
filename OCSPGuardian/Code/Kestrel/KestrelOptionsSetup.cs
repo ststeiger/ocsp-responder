@@ -51,20 +51,27 @@ namespace OCSPGuardian
         } // End Sub ConfigureEndpointDefaults 
 
 
-        public static System.Security.Cryptography.X509Certificates.X509Certificate2 ServerCertificateSelector(
-              System.Collections.Concurrent.ConcurrentDictionary<string, LetsEncryptData> certs
-            , Microsoft.AspNetCore.Connections.ConnectionContext connectionContext
-            , string name)
+        public static System.Security.Cryptography.X509Certificates.X509Certificate2? 
+            ServerCertificateSelector(
+                System.Collections.Concurrent.ConcurrentDictionary<string, LetsEncryptData> certs,
+                Microsoft.AspNetCore.Connections.ConnectionContext connectionContext, 
+                string name
+        )
         {
             if (certs != null && certs.Count > 0)
             {
                 if (string.IsNullOrEmpty(name))
                 {
-                    System.Net.IPEndPoint ipe = (System.Net.IPEndPoint)connectionContext.LocalEndPoint;
-                    if (ipe.Address.IsIPv4MappedToIPv6)
-                        name = ipe.Address.MapToIPv4().ToString();
+                    System.Net.IPEndPoint? ipe = (System.Net.IPEndPoint?)connectionContext?.LocalEndPoint;
+                    if (ipe == null)
+                        name = "unknown";
                     else
-                        name = ipe.Address.ToString();
+                    {
+                        if (ipe.Address.IsIPv4MappedToIPv6)
+                            name = ipe.Address.MapToIPv4().ToString();
+                        else
+                            name = ipe.Address.ToString();
+                    }
                 }
 
                 if (certs.ContainsKey(name))
@@ -118,18 +125,22 @@ namespace OCSPGuardian
             string? name
         )
         {
-            
 
             if (this.m_certificateService != null )
             {
                 if (string.IsNullOrEmpty(name))
                 {
-                    System.Net.IPEndPoint ipe = (System.Net.IPEndPoint)connectionContext.LocalEndPoint;
-                    if (ipe.Address.IsIPv4MappedToIPv6)
-                        name = ipe.Address.MapToIPv4().ToString();
+                    System.Net.IPEndPoint? ipe = (System.Net.IPEndPoint?)connectionContext?.LocalEndPoint;
+                    if (ipe == null)
+                        name = "unknown";
                     else
-                        name = ipe.Address.ToString();
-                }
+                    {
+                        if (ipe.Address.IsIPv4MappedToIPv6)
+                            name = ipe.Address.MapToIPv4().ToString();
+                        else
+                            name = ipe.Address.ToString();
+                    }
+                } // End if (string.IsNullOrEmpty(name)) 
 
                 System.Security.Cryptography.X509Certificates.X509Certificate2 cert = this.m_certificateService.GetCertificate2(name);
                 if(cert != null)

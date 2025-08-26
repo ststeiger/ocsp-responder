@@ -84,7 +84,7 @@ namespace libCertificateService
             } // End if (this.m_certificateMap.TryGetValue(domainName, out Certificate internetCert)) 
 
             // If not found in memory, try to get from repository and update our cache
-            Certificate certificate = await this.m_repository.GetLatestValidCertificateForDomain(domainName);
+            Certificate? certificate = await this.m_repository.GetLatestValidCertificateForDomain(domainName);
             if (certificate != null)
             {
                 this.m_certificateMap.TryAdd(domainName, certificate);
@@ -110,8 +110,9 @@ namespace libCertificateService
 
                 foreach (Certificate certificate in allCertificates)
                 {
-                    string domainName = certificate.DomainName;
-                    latestCertificates.Add(domainName, certificate);
+                    string? domainName = certificate.DomainName;
+                    if(!string.IsNullOrEmpty(domainName))
+                        latestCertificates.Add(domainName!, certificate);
                 } // Next certificate 
 
                 // Create a new dictionary with the latest certificates

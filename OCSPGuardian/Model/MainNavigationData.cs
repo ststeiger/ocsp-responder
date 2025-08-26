@@ -21,10 +21,10 @@ namespace OCSPGuardian.Model
 
     public class MainNavigationItem
     {
-        public string Area;
-        public string Action;
-        public string Text;
-        public int Sort;
+        public string? Area;
+        public string? Action;
+        public string? Text;
+        public int? Sort;
     } // End Class MainNavigationItem 
 
 
