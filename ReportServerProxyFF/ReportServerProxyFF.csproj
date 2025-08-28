@@ -71,14 +71,14 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CookieHelper.cs" />
-    <Compile Include="ForwardingTextWriterWithEncoding.cs" />
-    <Compile Include="SslHack.cs" />
+    <Compile Include="Code\CookieHelper.cs" />
+    <Compile Include="Code\ForwardingTextWriterWithEncoding.cs" />
+    <Compile Include="Code\SslHack.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="ProxyModule.cs" />
-    <Compile Include="xxxReportProxyHandler.cs" />
+    <Compile Include="Code\ProxyModule.cs" />
+    <Compile Include="Code\Trash\xxxReportProxyHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <PropertyGroup>

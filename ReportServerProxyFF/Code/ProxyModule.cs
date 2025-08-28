@@ -15,6 +15,7 @@ namespace ReportServerProxyFF
         static readonly string s_reportServerApplicationPath;
         static readonly string s_reportServerUrl;
 
+
         static ReportProxyModule()
         {
             s_applicationRelativePath = "/ReportServer";
@@ -33,13 +34,15 @@ namespace ReportServerProxyFF
             s_reportServerDomain = "reportsrv2.cor-asp.ch".TrimEnd('/');
             s_reportServerApplicationPath = "/ReportServer";
             s_reportServerUrl = "https://" + s_reportServerDomain + s_reportServerApplicationPath;
-        }
+        } // End Static Constuctor 
+
+
 
 
         public void Init(System.Web.HttpApplication context)
         {
             context.BeginRequest += OnBeginRequest;
-        }
+        } // End Sub Init 
 
 
 
@@ -56,7 +59,8 @@ namespace ReportServerProxyFF
                 return;
 
             ProxyRequest(context);
-        }
+        } // End Sub OnBeginRequest 
+
 
         private void ProxyRequest(System.Web.HttpContext context)
         {
@@ -87,8 +91,6 @@ namespace ReportServerProxyFF
 
             string applicationCanonicalUrl = context.Request.Url.Scheme + System.Uri.SchemeDelimiter + context.Request.Url.Authority + applicationRelativePath;
             string applicationDomainWithVirtDir = context.Request.Url.Authority + applicationRelativePath;
-
-
 
             // System.Diagnostics.Debug.WriteLine(applicationCanonicalUrl);
 
@@ -129,7 +131,7 @@ namespace ReportServerProxyFF
                 }
                 else if ("Expect".Equals(headerKey, System.StringComparison.OrdinalIgnoreCase))
                 {
-
+                    // Expect-100-continue is not just a simple header 
                     if ("100-continue".Equals(context.Request.Headers[headerKey], System.StringComparison.OrdinalIgnoreCase))
                     {
                         req.ServicePoint.Expect100Continue = true;
@@ -142,6 +144,7 @@ namespace ReportServerProxyFF
 
                     continue;
                 }
+                // This is never really hit, as a client-connection does not send Set-Cookie 
                 else if ("Set-Cookie".Equals(headerKey, System.StringComparison.OrdinalIgnoreCase))
                 {
                     string setCookieHeader = context.Request.Headers[headerKey];
@@ -149,13 +152,9 @@ namespace ReportServerProxyFF
                     if (!string.IsNullOrEmpty(setCookieHeader))
                     {
                         req.Headers[headerKey] = setCookieHeader;
-                        System.Collections.Generic.List<Cookie> cookieList = CookieHelper.ParseSetCookieHeader(setCookieHeader);
-
-
-
-                        System.Diagnostics.Debug.WriteLine(cookieList);
-                    }
-
+                        // System.Collections.Generic.List<Cookie> cookieList = CookieHelper.ParseSetCookieHeader(setCookieHeader);
+                        // System.Diagnostics.Debug.WriteLine(cookieList);
+                    } // End if (!string.IsNullOrEmpty(setCookieHeader))
 
                     continue;
                 }
@@ -237,18 +236,19 @@ namespace ReportServerProxyFF
 
                             if (!string.IsNullOrEmpty(gottenCookies))
                             {
-                                context.Response.Headers[headerKey] = gottenCookies;
+                                // context.Response.Headers[headerKey] = gottenCookies;
                                 System.Collections.Generic.List<Cookie> cookieList = CookieHelper.ParseSetCookieHeader(gottenCookies);
+                                // System.Diagnostics.Debug.WriteLine(cookieList);
 
                                 foreach (Cookie thisCookie in cookieList)
                                 {
-                                    System.Console.WriteLine(thisCookie.Domain);
-                                    System.Console.WriteLine(thisCookie.Path);
-                                }
+                                    // System.Console.WriteLine(thisCookie.Domain);
+                                    // System.Console.WriteLine(thisCookie.Path);
+                                    context.Response.Headers.Add(headerKey, thisCookie.ToString());
+                                } // Next thisCookie
 
-                                System.Diagnostics.Debug.WriteLine(cookieList);
-                            }
-                            
+                            } // End if (!string.IsNullOrEmpty(gottenCookies)) 
+
                             continue;
                         }
                         else if (headerKey.Equals("Location", System.StringComparison.OrdinalIgnoreCase))
@@ -257,11 +257,11 @@ namespace ReportServerProxyFF
                             // location = location.Replace("https://reportsrv2.cor-asp.ch/ReportServer", "https://localhost:44318/ReportServer");
                             location = location.Replace(s_reportServerUrl, applicationCanonicalUrl);
 
-                            //if (location.StartsWith(s_reportServerApplicationPath))
-                            //{
+                            // if (location.StartsWith(s_reportServerApplicationPath))
+                            // {
                             //    location = location.Substring(s_reportServerApplicationPath.Length);
                             //    location = s_applicationRelativePath + location;
-                            //}
+                            // }
 
                             location = location.Replace(s_reportServerApplicationPath, s_applicationRelativePath);
 
@@ -319,8 +319,7 @@ namespace ReportServerProxyFF
                             string responseText = reader.ReadToEnd();
                             // Optionally log it, inspect it, or modify it here
                             context.Response.Write(responseText);
-                        }
-
+                        } // End Using reader 
 #else
                         using (System.IO.MemoryStream memoryStream = new System.IO.MemoryStream())
                         {
@@ -407,21 +406,19 @@ namespace ReportServerProxyFF
                                 context.Response.OutputStream.Write(responseBytes, 0, responseBytes.Length);
                             }
 
-
-
-                                
-                        }
+                        } // End Using memoryStream 
 #endif
-                    }
-                }
-            }
+                    } // End Using respStream 
+
+                } // End Using resp 
+
+            } // End Try 
             catch (System.Net.WebException ex)
             {
 
                 if (ex.Response is System.Net.HttpWebResponse errorResp)
                 {
                     context.Response.TrySkipIisCustomErrors = true;
-
                     context.Response.StatusCode = (int)errorResp.StatusCode;
 
                     foreach (string headerKey in errorResp.Headers)
@@ -441,14 +438,12 @@ namespace ReportServerProxyFF
                             {
                                 context.Response.Headers[headerKey] = errorCookies;
 
-                                System.Collections.Generic.List<Cookie> cookieList = CookieHelper.ParseSetCookieHeader(errorCookies);
+                                // System.Collections.Generic.List<Cookie> cookieList = CookieHelper.ParseSetCookieHeader(errorCookies);
+                                // System.Diagnostics.Debug.WriteLine(cookieList);
+                            } // End if (!string.IsNullOrEmpty(errorCookies)) 
 
-
-                                System.Diagnostics.Debug.WriteLine(cookieList);
-                            }
-                            
                             continue;
-                        }
+                        } // End else if (headerKey.Equals("Set-Cookie", System.StringComparison.OrdinalIgnoreCase)) 
 
                         try
                         {
@@ -462,36 +457,33 @@ namespace ReportServerProxyFF
                             
                             System.Diagnostics.Debug.WriteLine("with value " + restrictedValue);
                             System.Diagnostics.Debug.WriteLine("Reason: " + setHeaderError.Message);
-                        } // ENd Catch 
+                        } // End Catch 
                         
-
                     } // Next headerKey 
 
 
-
+                    // Copy the error-response 
                     using (System.IO.Stream respStream = errorResp.GetResponseStream())
                     {
-
-
 #if true
                         respStream.CopyTo(context.Response.OutputStream);
 #else
-
                         using (System.IO.StreamReader reader = new System.IO.StreamReader(respStream))
                         {
                             string responseText = reader.ReadToEnd();
                             // Optionally log it, inspect it, or modify it here
                             context.Response.Write(responseText);
-                        }
+                        } // End Using reader 
 #endif
-
                     } // End Using respStream 
-                }
+
+                } // End if (ex.Response is System.Net.HttpWebResponse errorResp) 
                 else
                 {
                     context.Response.StatusCode = 500;
                     context.Response.Write("Proxy error: " + ex.Message);
-                }
+                } // End else of if is HttpWebResponse 
+
             } // End Catch 
 
             // End request so no further processing happens
@@ -556,7 +548,7 @@ namespace ReportServerProxyFF
         { } // End Sub Dispose 
 
 
-    } // End Class 
+    } // End Class ReportProxyModule 
 
 
 } // End Namespace 
