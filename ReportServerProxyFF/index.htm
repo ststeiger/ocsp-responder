@@ -1,0 +1,266 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Test</title>
+</head>
+<body>
+    <h1>Test</h1>
+
+    <!--
+    <a href="https://reportsrv2.cor-asp.ch/ReportServer/Pages/ReportViewer.aspx?/COR_Basic_Demo_V4/EXP_Adressdaten_Detail&proc=8a160af0d7e5563262f38554a8617586&in_sprache=DE&rs:embed=true&rc:Stylesheet=COR_RS2016_v1">SSRS Link</a>
+    -->
+    <!--
+    <a href="ReportServer/Pages/ReportViewer.aspx?/COR_Basic_Demo_V4/EXP_Adressdaten_Detail&proc=8a160af0d7e5563262f38554a8617586&in_sprache=DE&rs:embed=true&rc:Stylesheet=COR_RS2016_v1">SSRS Link</a>
+        <a href="ReportServer/Pages/ReportViewer.aspx?/COR_Basic_Demo_V4/AP_Arbeitsplatzuebersicht_ML&proc=8a160af0d7e5563262f38554a8617586&in_sprache=DE">AP_Arbeitsplatzuebersicht_ML</a>
+
+        <a href="ReportServer/Pages/ReportViewer.aspx?/COR_Basic_Demo_V4/AP_Arbeitsplatzuebersicht_ML&proc=8a160af0d7e5563262f38554a8617586&in_sprache=DE&rs:embed=true&rc:Stylesheet=COR_RS2016_v1">foo</a>
+        <a href="ReportServer/Pages/ReportViewer.aspx?/COR_Basic_Demo_V4/AP_Arbeitsplatzuebersicht_ML&proc=8a160af0d7e5563262f38554a8617586&in_sprache=DE&rs:embed=true&rc:Stylesheet=COR_RS2016_v1">Embed AP_Arbeitsplatzuebersicht_ML</a>
+    -->
+
+    <a target="_blank" href="blabla/Pages/ReportViewer.aspx?/COR_Basic_Demo_V4/AP_Arbeitsplatzuebersicht_ML&proc=8a160af0d7e5563262f38554a8617586&in_sprache=DE&rs:embed=true&rc:Stylesheet=COR_RS2016_v1">Embed AP_Arbeitsplatzuebersicht_ML</a>
+
+
+    <script>
+
+        function simpleAddCookie(name, value)
+        {
+            document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value);
+        }
+
+
+        // Sets a cookie with optional attributes.
+        // @param {Object} options - An object with keys: name, value, path, domain, expires, maxAge, secure, sameSite.
+        function addCookie(options)
+        {
+            if (!options.name || options.value === undefined)
+            {
+                console.error("Cookie 'name' and 'value' are required.");
+                return;
+            }
+
+            let cookieStr = `${encodeURIComponent(options.name)}=${encodeURIComponent(options.value)}`;
+
+            if (options.expires instanceof Date)
+            {
+                cookieStr += `; expires=${options.expires.toUTCString()}`;
+            }
+
+            if (typeof options.maxAge === 'number')
+            {
+                cookieStr += `; max-age=${options.maxAge}`;
+            }
+
+            if (options.path)
+            {
+                cookieStr += `; path=${options.path}`;
+            }
+
+            if (options.domain)
+            {
+                cookieStr += `; domain=${options.domain}`;
+            }
+
+            if (options.secure)
+            {
+                cookieStr += `; secure`;
+            }
+
+            if (options.sameSite)
+            {
+                cookieStr += `; samesite=${options.sameSite}`;
+            }
+
+            document.cookie = cookieStr;
+        }
+
+
+        // Retrieves the value of a cookie by name.
+        // @param {string} name - The cookie name to get.
+        // @returns {string|null} - The decoded cookie value, or null if not found.
+        function getCookie(name)
+        {
+            const encodedName = encodeURIComponent(name) + "=";
+            const cookies = document.cookie.split('; ');
+
+            for (let i = 0; i < cookies.length; i++)
+            {
+                // Check if cookie starts with the name we're looking for
+                if (cookies[i].indexOf(encodedName) === 0)
+                {
+                    return decodeURIComponent(cookies[i].substring(encodedName.length));
+                }
+            }
+
+            // Cookie not found
+            return null;
+        }
+
+
+        // Removes a cookie by setting its expiration in the past.
+        // Must match path/domain to effectively remove.
+        // @param {String} name - The cookie name.
+        // @param {Object} [options] - Optional attributes (path, domain).
+        function removeCookie(name, options = {})
+        {
+            if (!name) return;
+
+            let cookieStr = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 UTC`;
+
+            if (options.path)
+            {
+                cookieStr += `; path=${options.path}`;
+            }
+
+            if (options.domain)
+            {
+                cookieStr += `; domain=${options.domain}`;
+            }
+
+            document.cookie = cookieStr;
+        }
+
+
+        // Deletes all cookies accessible via JavaScript.
+        // @param {Object} [options] - Optional path/domain for matching deletion.
+        function removeAllCookies(options = {})
+        {
+            const cookies = document.cookie.split('; ');
+
+            for (let i = 0; i < cookies.length; i++)
+            {
+                const parts = cookies[i].split('=');
+                const name = decodeURIComponent(parts[0]);
+
+                // Build removal string
+                let cookieStr = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC`;
+
+                if (options.path)
+                {
+                    cookieStr += `; path=${options.path}`;
+                }
+
+                if (options.domain)
+                {
+                    cookieStr += `; domain=${options.domain}`;
+                }
+
+                document.cookie = cookieStr;
+            }
+        }
+
+
+
+        function removeReallyAllCookies()
+        {
+            removeAllCookies();
+            removeAllCookies({ path: "/" });
+        }
+
+
+        function getAllPaths()
+        {
+            var path = window.location.pathname;
+            var parts = path.split("/");
+            var paths = ["/"];
+            var current = "";
+
+            for (var i = 0; i < parts.length; i++)
+            {
+                if (parts[i] === "") continue; // skip empty segments
+                current += "/" + parts[i];
+                paths.push(current);
+            }
+
+            return paths;
+        }
+
+        // Non-HttpOnly only: JavaScript can’t delete HttpOnly cookies, so this will only remove client-accessible cookies.
+        // Secure cookies: If a cookie has Secure, you can only delete it over HTTPS.
+        // Optional: You could also loop over document.domain variations if you need to handle subdomains, 
+        // but that’s usually not needed unless cookies were set with a specific domain.
+        function removeReallyReallyAllCookies()
+        {
+            const paths = getAllPaths(); // see below
+
+            for (let i = 0; i < paths.length; ++i)
+            {
+                removeAllCookies({ path: paths[i]});
+            }
+
+        }
+
+
+
+
+        function removeCookies()
+        {
+            //document.cookie="";
+            var result = document.cookie;
+            var cookieArray = result.split(";");
+            for (var i = 0; i < cookieArray.length; i++)
+            {
+                var keyValArr = cookieArray[i].split("=");
+                document.cookie = keyValArr[0].trim() + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+            }
+        }
+
+
+
+        // Lists all current cookies in decoded form.
+        function listCookies()
+        {
+            const cookies = document.cookie.split('; ');
+            const result = [];
+
+            for (let i = 0; i < cookies.length; i++)
+            {
+                const parts = cookies[i].split('=');
+                const name = decodeURIComponent(parts[0]);
+                const value = decodeURIComponent(parts.slice(1).join('='));
+                result.push({ name, value });
+            }
+
+            return result;
+        }
+
+
+        console.clear();
+        // Turn off "Preserve log":
+        // Open your browser dev tools(usually F12 or right - click > Inspect).
+        // Go to the Console tab.
+        // Find the Preserve log checkbox near the top of the console and uncheck it.
+        // After disabling, console.clear() should work as expected.
+
+        // removeCookies();
+        // removeAllCookies({ path: "/" });
+        // removeAllCookies();
+        // removeReallyAllCookies();
+        removeReallyReallyAllCookies();
+
+
+        // simpleAddCookie("hello", "world");
+        // addCookie({ name: "ciao", value: "bello" });
+        // addCookie({ name: "onPath", value: "bello 1", path: "/" });
+        // addCookie({ name: "onReportServer", value: "bello 2", path: "/Virt_X/ReportServer" });
+
+        console.log("hello 1", getCookie("ciao"))
+        console.log("hello 2", getCookie("onPath"))
+        console.log("hello 3", getCookie("onReportServer"))
+
+
+
+        listCookies();
+        // console.log(getCookie("hello"));  // Output: "John Doe"
+
+    </script>
+
+
+</body>
+</html>
