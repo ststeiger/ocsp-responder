@@ -204,13 +204,23 @@ namespace OCSPGuardian
 
 
             // with HAproxy, it must be here ? 
-            if (this.m_proxyOptions.SslPassthrough)
+            // has nothing todo with HAproxy. 
+            // I used HAproxy in tls-passthrough mode, and nginx in tls-terminating mode. 
+            // in passthrough, the reverse-proxy does not have the certificate.
+            // So he prepends the proxy-v2-header, and as payload the encrypted tls.
+            // That means kestrel needs to process&skip/remove the proxy-header before it processes tls.
+            // In non-passthrough mode, the tls-connection is terminated in the reverse-proxy,
+            // the proxy-header is applied to the content, and that entire packet is tls-encrypted for kestrel.
+            // kestrel receives, does tls-termination, and then needs to process&skip/remove
+            // the Proxy-header only after decryption
+
+            if (this.m_proxyOptions.SslPassthrough) // with TLS passthrough 
                 kestrelOptions.ConfigureEndpointDefaults(ConfigureEndpointDefaults);
 
             kestrelOptions.ConfigureHttpsDefaults(this.SetListenOptions);
 
             // in NGINX, with SSL-termination - it must be HERE:
-            if (!this.m_proxyOptions.SslPassthrough)
+            if (!this.m_proxyOptions.SslPassthrough) // with TLS termination 
                 kestrelOptions.ConfigureEndpointDefaults(ConfigureEndpointDefaults);
         } // End Sub Configure 
 

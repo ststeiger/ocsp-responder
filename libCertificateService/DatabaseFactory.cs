@@ -57,7 +57,12 @@ namespace libCertificateService
         private void SubscribeToConfigChanges()
         {
             // Get a change token from the configuration
-            Microsoft.Extensions.Primitives.IChangeToken changeToken = this.m_configuration.GetReloadToken();
+            Microsoft.Extensions.Primitives.IChangeToken? changeToken = this.m_configuration?.GetReloadToken();
+
+            if (changeToken == null)
+            {
+                return;
+            }
 
             // Register a callback that will be invoked when the configuration changes
             this.m_changeTokenRegistration = changeToken.RegisterChangeCallback(
@@ -87,7 +92,8 @@ namespace libCertificateService
 
         private void LoadConnectionConfigurations()
         {
-            Microsoft.Extensions.Configuration.IConfigurationSection configSection = this.m_configuration.GetSection("TypedConnectionStrings");
+            Microsoft.Extensions.Configuration.IConfigurationSection? configSection = this.m_configuration?.GetSection("TypedConnectionStrings");
+
             if (!configSection.Exists())
                 throw new System.Exception("No section TypedConnectionStrings in appsettings.json");
 

