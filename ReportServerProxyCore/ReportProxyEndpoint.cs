@@ -1,16 +1,11 @@
 ﻿
 namespace ReportServerProxyCore
 {
-    using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.Http;
-    using System;
-    using System.Linq;
 
 
     public static class ReportProxyEndpoint
     {
-        private const string ReportPrefix = "/ReportServer";
-
+        
         private static readonly string s_reportServerDomain = "reportsrv2.cor-asp.ch";
         private static readonly string s_reportServerApplicationPath = "/ReportServer";
         private static readonly string s_reportServerUrl = "https://" + s_reportServerDomain + s_reportServerApplicationPath;
@@ -18,12 +13,11 @@ namespace ReportServerProxyCore
 
         public static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapReportProxy(
             this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints,
-            [System.Diagnostics.CodeAnalysis.StringSyntax("Route")] 
+            [System.Diagnostics.CodeAnalysis.StringSyntax("Route")]
             string pattern
         )
         {
-            return endpoints.MapMethods(
-                pattern,
+            return Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapMethods(endpoints, pattern,
                 new string[] { "GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS" },
                 ReportProxyEndpoint.ProxyRequest
             );
@@ -33,7 +27,7 @@ namespace ReportServerProxyCore
         private static string GetPrefix(Microsoft.AspNetCore.Http.HttpContext context)
         {
 #if ENABLE_WITH_CONTROLLERS
-            Endpoint? endpoint = context.GetEndpoint();
+            Microsoft.AspNetCore.Http.Endpoint? endpoint = Microsoft.AspNetCore.Http.EndpointHttpContextExtensions.GetEndpoint(context);
             // The routePattern = endpoint?.Metadata.GetMetadata<RoutePattern>() part
             // is only relevant if you ever mix in MVC controllers.
             Microsoft.AspNetCore.Routing.Patterns.RoutePattern? routePattern = 
@@ -47,9 +41,9 @@ namespace ReportServerProxyCore
                 Microsoft.AspNetCore.Routing.RouteEndpoint? minimalEndpoint = endpoint as Microsoft.AspNetCore.Routing.RouteEndpoint;
                 rawPattern = minimalEndpoint?.RoutePattern.RawText;
             } // End if (rawPattern == null) 
-#else 
+#else
             // efficiency: we don't mix with controllers, so this is more efficient. 
-            Microsoft.AspNetCore.Routing.RouteEndpoint? routeEndpoint = context.GetEndpoint() as Microsoft.AspNetCore.Routing.RouteEndpoint;
+            Microsoft.AspNetCore.Routing.RouteEndpoint? routeEndpoint = Microsoft.AspNetCore.Http.EndpointHttpContextExtensions.GetEndpoint(context) as Microsoft.AspNetCore.Routing.RouteEndpoint;
             string? rawPattern = routeEndpoint?.RoutePattern.RawText;
 #endif 
 
@@ -57,8 +51,8 @@ namespace ReportServerProxyCore
                 return string.Empty;
 
             int ind = rawPattern.IndexOf("{*");
-            
-            
+
+
 
             if (ind == -1)
                 return string.Empty;
@@ -68,8 +62,8 @@ namespace ReportServerProxyCore
             // return prefix;
 
             // Micro-Optimization: only ONE allocation for substring and TrimEnd instead of 2 
-            System.ReadOnlySpan<char> span = rawPattern.AsSpan();
-            System.ReadOnlySpan<char> prefixSpan = span.Slice(0, ind).TrimEnd('/');
+            System.ReadOnlySpan<char> span = System.MemoryExtensions.AsSpan( rawPattern);
+            System.ReadOnlySpan<char> prefixSpan = System.MemoryExtensions.TrimEnd(span.Slice(0, ind), '/');
 
             // Only allocate here for the final string
             return prefixSpan.ToString();
@@ -77,7 +71,7 @@ namespace ReportServerProxyCore
 
 
         public static async System.Threading.Tasks.Task ProxyRequest(
-            Microsoft.AspNetCore.Http.HttpContext context, 
+            Microsoft.AspNetCore.Http.HttpContext context,
             System.Net.Http.IHttpClientFactory httpClientFactory
             // ,string? catchAll // this includes only the path, not the queryString
         )
@@ -85,8 +79,8 @@ namespace ReportServerProxyCore
 
             try
             {
-                string prefix = GetPrefix(context);
-                System.Diagnostics.Debug.WriteLine(prefix);
+                string ReportPrefix = GetPrefix(context);
+                System.Diagnostics.Debug.WriteLine(ReportPrefix);
 
                 Microsoft.AspNetCore.Http.HttpRequest request = context.Request;
                 Microsoft.AspNetCore.Http.HttpResponse response = context.Response;
@@ -94,8 +88,8 @@ namespace ReportServerProxyCore
 
 
                 // string? catchAll = request.Path.Value?.Substring(ReportPrefix.Length) + request.QueryString;
-                string? catchAll = request.Path.Value?.Substring(prefix.Length) + request.QueryString;
-                
+                string? catchAll = request.Path.Value?.Substring(ReportPrefix.Length) + request.QueryString;
+
                 string targetUrl = s_reportServerUrl + catchAll;
 
 
@@ -114,8 +108,8 @@ namespace ReportServerProxyCore
                 // - Disable certain features
 
                 string ua = request.Headers["User-Agent"].ToString();
-                if(!string.IsNullOrEmpty(ua))
-                targetRequest.Headers.UserAgent.ParseAdd(ua);
+                if (!string.IsNullOrEmpty(ua))
+                    targetRequest.Headers.UserAgent.ParseAdd(ua);
 
 
 
@@ -128,7 +122,7 @@ namespace ReportServerProxyCore
                     {
                         targetRequest.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
                     }
-                }
+                } // Next header 
 
                 // // Copy body if needed
                 //if (request.ContentLength > 0)
@@ -225,7 +219,6 @@ namespace ReportServerProxyCore
                             // Create content from the buffered data
                             System.Net.Http.ByteArrayContent content = new System.Net.Http.ByteArrayContent(bodyBytes);
 
-
                             // Set content type if available
                             if (!string.IsNullOrEmpty(request.ContentType))
                             {
@@ -234,29 +227,9 @@ namespace ReportServerProxyCore
 
                             // Content-Length is automatically set by ByteArrayContent
                             targetRequest.Content = content;
-                        }
-                    }
+                        } // End Using ms 
 
-                    //// Not a form, just pass through raw stream
-                    //long a = request.Body.Length;
-
-                    //await request.Body.CopyToAsync(ms);
-                    //ms.Position = 0;
-                    //request.Body.Position = 0;
-
-                    //System.Net.Http.StreamContent content = new System.Net.Http.StreamContent(ms);
-                    //content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(request.ContentType ?? "application/octet-stream");
-                    //content.Headers.ContentLength = a;
-
-
-                    //// new System.Net.Http.Headers.MediaTypeHeaderValue(request.ContentType ?? "application/octetstream");
-
-                    //targetRequest.Content = content;
-
-                    // }
-
-
-
+                    } // End if (request.ContentLength > 0 && request.Body.CanRead) 
 
                     try
                     {
@@ -265,22 +238,46 @@ namespace ReportServerProxyCore
                     catch (System.Net.Http.HttpRequestException ex)
                     {
                         response.StatusCode = 502;
-                        await response.WriteAsync("Proxy Error: " + ex.Message);
+                        await Microsoft.AspNetCore.Http.HttpResponseWritingExtensions.WriteAsync(response, "Proxy Error: " + ex.Message);
+
                         return;
                     }
                 }
                 response.StatusCode = (int)targetResponse.StatusCode;
 
+
                 // Copy response headers
                 foreach (System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.IEnumerable<string>> header in targetResponse.Headers)
                 {
-                    response.Headers[header.Key] = header.Value.ToArray();
-                }
+                    // response.Headers[header.Key] = header.Value.ToArray();
+                    //Microsoft.Extensions.Primitives.StringValues existingStringValues = response.Headers[header.Key];
+
+                    // This is the alternative to header.Value.ToArray()
+                    System.Collections.Generic.List<string> ls = new System.Collections.Generic.List<string>();
+                    foreach (string value in header.Value)
+                        ls.Add(value);
+
+                    // Then you would assign it
+                    // response.Headers[header.Key] = existingStringValues + ls;
+                    response.Headers[header.Key] = new Microsoft.Extensions.Primitives.StringValues(ls.ToArray());
+                } // Next header 
+
 
                 foreach (System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.IEnumerable<string>> header in targetResponse.Content.Headers)
                 {
-                    response.Headers[header.Key] = header.Value.ToArray();
-                }
+                    // response.Headers[header.Key] = header.Value.ToArray();
+
+                    //Microsoft.Extensions.Primitives.StringValues existingStringValues = response.Headers[header.Key];
+
+                    // This is the alternative to header.Value.ToArray()
+                    System.Collections.Generic.List<string> ls = new System.Collections.Generic.List<string>();
+                    foreach (string value in header.Value)
+                        ls.Add(value);
+
+                    // Then you would assign it
+                    // response.Headers[header.Key] = existingStringValues + ls;
+                    response.Headers[header.Key] = new Microsoft.Extensions.Primitives.StringValues(ls.ToArray());
+                } // Next header 
 
                 // Rewrite Location headers (if any)
                 if (response.Headers.ContainsKey("Location"))
@@ -288,12 +285,10 @@ namespace ReportServerProxyCore
                     string? location = response.Headers["Location"];
                     location = location?.Replace(s_reportServerUrl, context.Request.Scheme + "://" + context.Request.Host + ReportPrefix);
                     response.Headers["Location"] = location;
-                }
+                } // End if (response.Headers.ContainsKey("Location")) 
 
                 // Strip headers ASP.NET Core doesn't allow manually
                 response.Headers.Remove("transfer-encoding");
-
-
                 response.Headers.Remove("Content-Encoding");
                 response.Headers.Remove("Content-Length");
 
@@ -303,13 +298,38 @@ namespace ReportServerProxyCore
 
                 if (response.ContentType?.StartsWith("text/html", System.StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    string html = System.Text.Encoding.UTF8.GetString(responseBody);
-                    html = html.Replace("href=\"" + s_reportServerApplicationPath, "href=\"" + ReportPrefix);
-                    html = html.Replace("src=\"" + s_reportServerApplicationPath, "src=\"" + ReportPrefix);
-                    html = html.Replace(s_reportServerDomain + "/ReportServer", context.Request.Host + ReportPrefix);
+                    string responseText = System.Text.Encoding.UTF8.GetString(responseBody);
+                    responseText = responseText.Replace("href=\"" + s_reportServerApplicationPath, "href=\"" + ReportPrefix);
+                    responseText = responseText.Replace("src=\"" + s_reportServerApplicationPath, "src=\"" + ReportPrefix);
+                    responseText = responseText.Replace(s_reportServerDomain + "/ReportServer", context.Request.Host + ReportPrefix);
 
-                    await response.WriteAsync(html);
-                }
+                    responseText = responseText.Replace("url(\"/ReportServer", "url(\"" + ReportPrefix);
+                    responseText = responseText.Replace("Url\":\"/ReportServer", "Url\":\"" + ReportPrefix);
+                    responseText = responseText.Replace("\\\":\\\"/ReportServer", "\\\":\\\"" + ReportPrefix);
+                    responseText = responseText.Replace("\":\"/ReportServer", "\":\"" + ReportPrefix);
+
+                    await Microsoft.AspNetCore.Http.HttpResponseWritingExtensions.WriteAsync(response, responseText);
+                } // End if text/html
+                else if (response.ContentType?.StartsWith("text/plain", System.StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    string responseText = System.Text.Encoding.UTF8.GetString(responseBody);
+                    System.Collections.Generic.List<AjaxDelta> parsedDeltas = AjaxDeltaParser.Parse(responseText);
+
+                    foreach (AjaxDelta thisDelta in parsedDeltas)
+                    {
+                        if (thisDelta.Content == null)
+                            continue;
+
+                        if (thisDelta.Content.ToLower().IndexOf("reportserver") != -1)
+                        {
+                            thisDelta.Content = thisDelta.Content.Replace("/ReportServer", ReportPrefix);
+                        } // End if 
+
+                    } // Next thisDelta 
+
+                    responseText = AjaxDeltaParser.Recombine(parsedDeltas);
+                    await Microsoft.AspNetCore.Http.HttpResponseWritingExtensions.WriteAsync(response, responseText);
+                } // End if text/plain 
                 else
                 {
                     await response.Body.WriteAsync(responseBody);
@@ -322,7 +342,7 @@ namespace ReportServerProxyCore
                 System.Diagnostics.Debug.WriteLine(ex.Message);
                 System.Diagnostics.Debug.WriteLine(ex.StackTrace);
             }
-        } // End Task 
+        } // End Task ProxyRequest 
 
 
     } // End Class ReportProxyMiddleware 

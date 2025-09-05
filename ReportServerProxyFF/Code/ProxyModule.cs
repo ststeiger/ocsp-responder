@@ -18,7 +18,7 @@ namespace ReportServerProxyFF
 
         static ReportProxyModule()
         {
-            s_applicationRelativePath = "/ReportServer";
+            s_applicationRelativePath = "/blablaReportServer";
             // s_applicationRelativePath = "/blabla";
             s_applicationRelativePathLength = s_applicationRelativePath.Length;
 
@@ -303,9 +303,8 @@ namespace ReportServerProxyFF
                     } // Next headerKey 
 
                     string proxyHeaders = sbProxiedHeaders.ToString();
-                    System.Diagnostics.Debug.WriteLine(proxyHeaders);
-
-                    System.Diagnostics.Debug.WriteLine(context.Response.ContentType);
+                    // System.Diagnostics.Debug.WriteLine(proxyHeaders);
+                    // System.Diagnostics.Debug.WriteLine(context.Response.ContentType);
 
                     using (System.IO.Stream respStream = resp.GetResponseStream())
                     {
@@ -327,19 +326,24 @@ namespace ReportServerProxyFF
                             byte[] responseBytes = memoryStream.ToArray();
 
                             // Log/inspect response as UTF-8 string (safely)
-
                             if (context.Response.ContentType.TrimStart().StartsWith("text/html", System.StringComparison.InvariantCultureIgnoreCase))
                             {
                                 string responseText = System.Text.Encoding.UTF8.GetString(responseBytes);
+                                
                                 // Log it if you want
-                                System.Diagnostics.Debug.WriteLine(responseText);
+                                // System.Diagnostics.Debug.WriteLine(responseText);
 
                                 // responseText = responseText.Replace("href=\"/ReportServer", "href=\"/blabla");
                                 // responseText = responseText.Replace("src=\"/ReportServer", "src=\"/blabla");
 
-                                responseText = responseText.Replace("href=\"" + s_reportServerApplicationPath, "href=\"" + s_applicationRelativePath);
-                                responseText = responseText.Replace("src=\"" + s_reportServerApplicationPath, "src=\"" + s_applicationRelativePath);
+                                responseText = responseText.Replace("href=\"" + s_reportServerApplicationPath, "href=\"" + s_applicationBaseUrl);
+                                responseText = responseText.Replace("src=\"" + s_reportServerApplicationPath, "src=\"" + s_applicationBaseUrl);
                                 
+                                responseText = responseText.Replace("url(\"/ReportServer", "url(\"" + s_applicationBaseUrl);
+                                responseText = responseText.Replace("Url\":\"/ReportServer", "Url\":\"" + s_applicationBaseUrl);
+                                responseText = responseText.Replace("\\\":\\\"/ReportServer", "\\\":\\\"" + s_applicationBaseUrl);
+                                responseText = responseText.Replace("\":\"/ReportServer", "\":\"" + s_applicationBaseUrl);
+
 
                                 responseText = responseText.Replace(s_reportServerDomain + "/ReportServer", applicationDomainWithVirtDir);
 
@@ -350,32 +354,27 @@ namespace ReportServerProxyFF
                             {
                                 string responseText = System.Text.Encoding.UTF8.GetString(responseBytes);
                                 // Log it if you want
-                                System.Diagnostics.Debug.WriteLine(responseText);
+                                // System.Diagnostics.Debug.WriteLine(responseText);
 
 
-                                /*
-                                <configuration>
-                                  <system.web>
-                                    <pages enableViewStateMac="false" />
-                                  </system.web>
-                                </configuration>
-                                */
+                                System.Collections.Generic.List<AjaxDelta> parsedDeltas = AjaxDeltaParser.Parse(responseText);
 
+                                foreach (AjaxDelta thisDelta in parsedDeltas)
+                                {
+                                    if (thisDelta.Content == null)
+                                        continue;
 
-                                // responseText = responseText.Replace("href=\"/ReportServer", "href=\"/blabla");
-                                // responseText = responseText.Replace("src=\"/ReportServer", "src=\"/blabla");
+                                    if (thisDelta.Content.ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("reportserver") != -1)
+                                    {
+                                        thisDelta.Content = thisDelta.Content.Replace("/ReportServer", s_applicationBaseUrl);
+                                    }
 
-                                // responseText = responseText.Replace("href=\"" + s_reportServerApplicationPath, "href=\"" + s_applicationRelativePath);
-                                // responseText = responseText.Replace("src=\"" + s_reportServerApplicationPath, "src=\"" + s_applicationRelativePath);
+                                } // Next thisDelta 
 
-
-                                // responseText = responseText.Replace("image:url(" + s_reportServerApplicationPath, "image:url(" + s_applicationRelativePath);
-
-
-                                // responseText = responseText.Replace(s_reportServerApplicationPath, s_applicationRelativePath);
-
+                                responseText = AjaxDeltaParser.Recombine(parsedDeltas);
                                 context.Response.Write(responseText);
                             }
+#if false
                             else if (context.Response.ContentType.TrimStart().StartsWith("text/xml", System.StringComparison.InvariantCultureIgnoreCase))
                             {
                                 string responseText = System.Text.Encoding.UTF8.GetString(responseBytes);
@@ -400,6 +399,7 @@ namespace ReportServerProxyFF
 
                                 context.Response.Write(responseText);
                             }
+#endif 
                             else
                             {
                                 // Write original bytes to response (preserves images, etc.)
@@ -408,7 +408,7 @@ namespace ReportServerProxyFF
 
                         } // End Using memoryStream 
 #endif
-                    } // End Using respStream 
+                        } // End Using respStream 
 
                 } // End Using resp 
 

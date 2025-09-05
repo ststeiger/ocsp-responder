@@ -107,13 +107,11 @@ namespace ReportServerProxyCore
             });
             */
 
-            // app.UseMiddleware<ReportServerProxyCore.ReportProxyMiddleware>();
+            // app.UseMiddleware<ReportProxyMiddleware>();
 
 
             // app.MapReportProxy("/{*catchAll}");
-            app.MapReportProxy("/ReportServer/{*catchAll}");
-
-
+            app.MapReportProxy("/blablaReportServer/{*catchAll}");
 
 
 
