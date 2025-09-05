@@ -1,4 +1,6 @@
 ﻿
+using Portal.SingleSignOn;
+
 namespace ReportServerProxyFF
 {
 
@@ -45,8 +47,6 @@ namespace ReportServerProxyFF
         } // End Sub Init 
 
 
-
-
         private void OnBeginRequest(object sender, System.EventArgs e)
         {
             System.Web.HttpApplication app = (System.Web.HttpApplication)sender;
@@ -60,6 +60,23 @@ namespace ReportServerProxyFF
 
             ProxyRequest(context);
         } // End Sub OnBeginRequest 
+
+
+        private static void TestSQL()
+        {
+
+            string cs = SQL.GetConnectionString();
+            System.Console.WriteLine(cs);
+
+
+            using (System.Data.Common.DbCommand cmd = SQL.CreateCommand("SELECT @@language"))
+            {
+                // SQL.AddParameter(cmd, "", "");
+                string sqlLanguage = SQL.ExecuteScalar<string>(cmd);
+                System.Console.WriteLine(sqlLanguage);
+            }
+
+        } // End Sub TestSQL 
 
 
         private void ProxyRequest(System.Web.HttpContext context)
@@ -76,6 +93,7 @@ namespace ReportServerProxyFF
             );
 
 
+
             string applicationRelativePath = context.Request.RawUrl.Substring(
                 0,
                 context.Request.RawUrl.IndexOf(
@@ -88,13 +106,16 @@ namespace ReportServerProxyFF
 
 
 
+            // This is needed for the SSRS-Cookie
+            string actuallyUsedApplicationPath = context.Request.Path.Substring(0, context.Request.ApplicationPath.Length);
+            // System.Console.WriteLine(actualApplicationPath);
+
+
 
             string applicationCanonicalUrl = context.Request.Url.Scheme + System.Uri.SchemeDelimiter + context.Request.Url.Authority + applicationRelativePath;
             string applicationDomainWithVirtDir = context.Request.Url.Authority + applicationRelativePath;
 
             // System.Diagnostics.Debug.WriteLine(applicationCanonicalUrl);
-
-
 
 
             // Mispelled URL !
@@ -114,6 +135,9 @@ namespace ReportServerProxyFF
             System.Text.StringBuilder sbForwarded = new System.Text.StringBuilder();
             System.Text.StringBuilder sbIgnored = new System.Text.StringBuilder();
 
+            bool hasAuthCookie = false;
+
+            System.Collections.Generic.List<Cookie> ssrsClientCookies = null;
 
             // Forward headers
             foreach (string headerKey in context.Request.Headers)
@@ -122,6 +146,13 @@ namespace ReportServerProxyFF
                     req.Accept = context.Request.Headers[headerKey];
                 else if ("User-Agent".Equals(headerKey, System.StringComparison.OrdinalIgnoreCase))
                     req.UserAgent = context.Request.Headers[headerKey];
+                else if ("Accept-Language".Equals(headerKey, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    string linguaReportica = context.Request.Headers[headerKey];
+                    // fetch from db
+                    // req.Headers["Accept-Language"] = "en-US";
+                    req.Headers["Accept-Language"] = linguaReportica;
+                }
                 else if ("Accept-Encoding".Equals(headerKey, System.StringComparison.OrdinalIgnoreCase))
                 {
                     // continue; // gzip, deflate, br, zstd
@@ -143,6 +174,22 @@ namespace ReportServerProxyFF
                     }
 
                     continue;
+                }
+                else if ("Cookie".Equals(headerKey, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    string clientCookieHeader = context.Request.Headers[headerKey];
+                    ssrsClientCookies = CookieHelper.ParseCookieHeader(clientCookieHeader);
+
+                    foreach (Cookie thisCookie in ssrsClientCookies)
+                    {
+                        if ("sqlauthcookie".Equals(thisCookie.Name, System.StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            hasAuthCookie = true;
+                            break;
+                        }
+                    }
+
+                    req.Headers[headerKey] = context.Request.Headers[headerKey];
                 }
                 // This is never really hit, as a client-connection does not send Set-Cookie 
                 else if ("Set-Cookie".Equals(headerKey, System.StringComparison.OrdinalIgnoreCase))
@@ -188,6 +235,36 @@ namespace ReportServerProxyFF
 
             } // Next headerKey 
 
+
+            System.Collections.Generic.List<Cookie> ssrsSetCookies = null;
+
+
+            if (!hasAuthCookie)
+            {
+                // actuallyUsedApplicationPath
+                SSRS_2012.cSSRS_PublicInfo aaa = SSRS_2012.GetLoginData();
+                string[] setCookieHeaderSSRS = SSRSClient.PostToSSRS(aaa.SSRS_Link, aaa.SSRS_Data);
+
+                foreach (string thisSetCookieHeader in setCookieHeaderSSRS)
+                {
+                    ssrsSetCookies = CookieHelper.ParseSetCookieHeader(thisSetCookieHeader);
+                    foreach (Cookie thisSSRsSetCookie in ssrsSetCookies)
+                    {
+
+                        if (ssrsClientCookies == null)
+                            ssrsClientCookies = new System.Collections.Generic.List<Cookie>();
+
+                        thisSSRsSetCookie.Path = actuallyUsedApplicationPath;
+
+                        ssrsClientCookies.Add(new Cookie() { Name = thisSSRsSetCookie.Name, Value = thisSSRsSetCookie.Value });
+                        req.Headers["Cookie"] = CookieHelper.BuildCookieHeaderForCookies(ssrsClientCookies);
+                    }
+                } // Next thisSSRsSetCookie 
+
+            } // End if (!hasAuthCookie) 
+
+
+
             string forwardedHeaders = sbForwarded.ToString();
             string ignoredHeaders = sbIgnored.ToString();
             System.Diagnostics.Debug.WriteLine(forwardedHeaders, ignoredHeaders);
@@ -228,27 +305,6 @@ namespace ReportServerProxyFF
                         {
                             string contentType = resp.Headers[headerKey];
                             context.Response.ContentType = contentType;
-                            continue;
-                        }
-                        else if (headerKey.Equals("Set-Cookie", System.StringComparison.OrdinalIgnoreCase))
-                        {
-                            string gottenCookies = resp.Headers[headerKey];
-
-                            if (!string.IsNullOrEmpty(gottenCookies))
-                            {
-                                // context.Response.Headers[headerKey] = gottenCookies;
-                                System.Collections.Generic.List<Cookie> cookieList = CookieHelper.ParseSetCookieHeader(gottenCookies);
-                                // System.Diagnostics.Debug.WriteLine(cookieList);
-
-                                foreach (Cookie thisCookie in cookieList)
-                                {
-                                    // System.Console.WriteLine(thisCookie.Domain);
-                                    // System.Console.WriteLine(thisCookie.Path);
-                                    context.Response.Headers.Add(headerKey, thisCookie.ToString());
-                                } // Next thisCookie
-
-                            } // End if (!string.IsNullOrEmpty(gottenCookies)) 
-
                             continue;
                         }
                         else if (headerKey.Equals("Location", System.StringComparison.OrdinalIgnoreCase))
@@ -302,6 +358,64 @@ namespace ReportServerProxyFF
 
                     } // Next headerKey 
 
+
+                    // set cookies 
+                    {
+                        string headerKey = "Set-Cookie";
+                        string gottenCookies = resp.Headers[headerKey];
+
+                        if (!string.IsNullOrEmpty(gottenCookies))
+                        {
+                            // context.Response.Headers[headerKey] = gottenCookies;
+                            System.Collections.Generic.List<Cookie> cookieList = CookieHelper.ParseSetCookieHeader(gottenCookies);
+                            // System.Diagnostics.Debug.WriteLine(cookieList);
+
+                            // req.Headers["Set-Cookie"] = CookieHelper.BuildSetCookieHeader(ssrsSetCookies);
+
+
+                            foreach (Cookie thisCookie in cookieList)
+                            {
+                                // System.Console.WriteLine(thisCookie.Domain);
+                                // System.Console.WriteLine(thisCookie.Path);
+
+                                if (ssrsSetCookies != null)
+                                {
+
+                                    bool addedSSRScookieInstead = false;
+
+                                    foreach (Cookie thisSetCookie in ssrsSetCookies)
+                                    {
+                                        if (string.Equals(thisCookie.Name, thisSetCookie.Name, System.StringComparison.InvariantCultureIgnoreCase))
+                                        {
+                                            context.Response.Headers.Add(headerKey, thisSetCookie.ToString());
+                                            addedSSRScookieInstead = true;
+                                        }
+
+                                    } // Next thisSetCookie 
+
+                                    if (!addedSSRScookieInstead)
+                                        context.Response.Headers.Add(headerKey, thisCookie.ToString());
+                                }
+                                else
+                                    context.Response.Headers.Add(headerKey, thisCookie.ToString());
+                            } // Next thisCookie
+
+                        } // End if (!string.IsNullOrEmpty(gottenCookies)) 
+                        else
+                        {
+                            if (ssrsSetCookies != null)
+                            {
+                                foreach (Cookie thisSetCookie in ssrsSetCookies)
+                                {
+                                    context.Response.Headers.Add(headerKey, thisSetCookie.ToSetCookieHeader());
+                                } // Next thisSetCookie 
+                            }
+                        }
+
+                    } // End Setting cookies 
+
+
+
                     string proxyHeaders = sbProxiedHeaders.ToString();
                     // System.Diagnostics.Debug.WriteLine(proxyHeaders);
                     // System.Diagnostics.Debug.WriteLine(context.Response.ContentType);
@@ -329,7 +443,7 @@ namespace ReportServerProxyFF
                             if (context.Response.ContentType.TrimStart().StartsWith("text/html", System.StringComparison.InvariantCultureIgnoreCase))
                             {
                                 string responseText = System.Text.Encoding.UTF8.GetString(responseBytes);
-                                
+
                                 // Log it if you want
                                 // System.Diagnostics.Debug.WriteLine(responseText);
 
@@ -338,7 +452,7 @@ namespace ReportServerProxyFF
 
                                 responseText = responseText.Replace("href=\"" + s_reportServerApplicationPath, "href=\"" + s_applicationBaseUrl);
                                 responseText = responseText.Replace("src=\"" + s_reportServerApplicationPath, "src=\"" + s_applicationBaseUrl);
-                                
+
                                 responseText = responseText.Replace("url(\"/ReportServer", "url(\"" + s_applicationBaseUrl);
                                 responseText = responseText.Replace("Url\":\"/ReportServer", "Url\":\"" + s_applicationBaseUrl);
                                 responseText = responseText.Replace("\\\":\\\"/ReportServer", "\\\":\\\"" + s_applicationBaseUrl);
@@ -399,7 +513,7 @@ namespace ReportServerProxyFF
 
                                 context.Response.Write(responseText);
                             }
-#endif 
+#endif
                             else
                             {
                                 // Write original bytes to response (preserves images, etc.)
@@ -408,7 +522,7 @@ namespace ReportServerProxyFF
 
                         } // End Using memoryStream 
 #endif
-                        } // End Using respStream 
+                    } // End Using respStream 
 
                 } // End Using resp 
 
@@ -454,11 +568,11 @@ namespace ReportServerProxyFF
                             string restrictedValue = errorResp.Headers[headerKey];
 
                             System.Diagnostics.Debug.WriteLine("failed " + headerKey);
-                            
+
                             System.Diagnostics.Debug.WriteLine("with value " + restrictedValue);
                             System.Diagnostics.Debug.WriteLine("Reason: " + setHeaderError.Message);
                         } // End Catch 
-                        
+
                     } // Next headerKey 
 
 
@@ -531,7 +645,7 @@ namespace ReportServerProxyFF
                     } // End Using fwriter 
 
                 } // End Using sw 
-                
+
                 System.Diagnostics.Debug.WriteLine(resp); // log formatted XML
             } // End Try 
             catch (System.Xml.XmlException xe)

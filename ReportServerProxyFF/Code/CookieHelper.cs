@@ -6,6 +6,10 @@ namespace ReportServerProxyFF
     [System.Diagnostics.DebuggerDisplay("{this.Name} = {this.Value}")]
     public class Cookie
     {
+
+        public bool IsSetCookie; // Is it from Set-Cookie header, or from Cookie-Header 
+
+
         /// <summary>
         /// Case-sensitive
         /// </summary>
@@ -40,6 +44,8 @@ namespace ReportServerProxyFF
         public int? MaxAge;          // in seconds
         public bool? Partitioned;    // true/false
 
+
+        
 
         public Cookie()
         {
@@ -243,8 +249,13 @@ namespace ReportServerProxyFF
             {
                 string cookieString = cookieStrings[i];
                 Cookie cookie = ParseSingleCookie(cookieString);
+                
                 if (cookie != null)
+                {
+                    cookie.IsSetCookie = true;
                     cookieList.Add(cookie);
+                }
+                    
             } // Next i 
 
             return cookieList;

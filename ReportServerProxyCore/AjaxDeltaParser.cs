@@ -8,7 +8,7 @@ namespace ReportServerProxyCore
         public string Type { get; set; }
         public string Id { get; set; }
         public string Content { get; set; }
-    }
+    } // End Class AjaxDelta 
 
 
     public static class AjaxDeltaParser
@@ -77,10 +77,11 @@ namespace ReportServerProxyCore
                     Id = id,
                     Content = content
                 });
-            }
+            } // Whend 
 
             return result;
-        }
+        } // End Function Parse 
+
 
         public static string Recombine(System.Collections.Generic.List<AjaxDelta> deltas)
         {
@@ -97,12 +98,13 @@ namespace ReportServerProxyCore
                 sb.Append('|');
                 sb.Append(delta.Content);
                 sb.Append('|');
-            }
+            } // Next delta 
 
             return sb.ToString();
-        }
+        } // End Function Recombine 
 
 
-    }
+    } // End Class AjaxDeltaParser 
 
-}
+
+} // End Namespace 

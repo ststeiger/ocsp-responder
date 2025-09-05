@@ -112,6 +112,11 @@ namespace ReportServerProxyCore
                     targetRequest.Headers.UserAgent.ParseAdd(ua);
 
 
+                // Copy the Accept-Language header from the incoming request to the outgoing request
+                string language = request.Headers["Accept-Language"].ToString();
+                if (!string.IsNullOrEmpty(language))
+                    targetRequest.Headers.AcceptLanguage.ParseAdd(language);
+
 
                 // Copy request headers
                 foreach (System.Collections.Generic.KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues> header in request.Headers)
