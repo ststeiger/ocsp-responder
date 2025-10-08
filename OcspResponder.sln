@@ -23,8 +23,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWebSocketProxy", "TestW
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHttpProxy", "TestHttpProxy\TestHttpProxy.csproj", "{52019B9E-D415-461E-A6B9-D321D93D6BD9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnvoyPlaneController", "EnvoyPlaneController\EnvoyPlaneController.csproj", "{23F8CD5F-FE2B-4A4D-B293-3C9F60BB25F3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHttpsProxy", "TestHttpsProxy\TestHttpsProxy.csproj", "{E3E314D7-A6C4-4D2B-80F6-D5E22720CFCA}"
 EndProject
 Global
@@ -94,12 +92,6 @@ Global
 		{52019B9E-D415-461E-A6B9-D321D93D6BD9}.Integration|Any CPU.Build.0 = Debug|Any CPU
 		{52019B9E-D415-461E-A6B9-D321D93D6BD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52019B9E-D415-461E-A6B9-D321D93D6BD9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{23F8CD5F-FE2B-4A4D-B293-3C9F60BB25F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{23F8CD5F-FE2B-4A4D-B293-3C9F60BB25F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{23F8CD5F-FE2B-4A4D-B293-3C9F60BB25F3}.Integration|Any CPU.ActiveCfg = Debug|Any CPU
-		{23F8CD5F-FE2B-4A4D-B293-3C9F60BB25F3}.Integration|Any CPU.Build.0 = Debug|Any CPU
-		{23F8CD5F-FE2B-4A4D-B293-3C9F60BB25F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{23F8CD5F-FE2B-4A4D-B293-3C9F60BB25F3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E3E314D7-A6C4-4D2B-80F6-D5E22720CFCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E3E314D7-A6C4-4D2B-80F6-D5E22720CFCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E3E314D7-A6C4-4D2B-80F6-D5E22720CFCA}.Integration|Any CPU.ActiveCfg = Debug|Any CPU
